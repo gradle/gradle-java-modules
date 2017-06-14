@@ -1,0 +1,24 @@
+plugins {
+    id "java-gradle-plugin"
+    id "maven-publish"
+}
+
+group = "org.gradle.java"
+version = "0.1.0"
+
+publishing {
+    repositories {
+        maven {
+            url "/tmp/localPlugins"
+        }
+    }
+}
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = "org.gradle.java.experimental-jigsaw"
+            implementationClass = "org.gradle.java.JigsawPlugin"
+        }
+    }
+}
