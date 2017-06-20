@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import org.gradle.api.Task;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.ApplicationPlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -38,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class JigsawPlugin implements Plugin<Project> {
     private static final Logger LOGGER = Logging.getLogger(JigsawPlugin.class);
@@ -56,7 +58,9 @@ public class JigsawPlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         LOGGER.debug("Applying JigsawPlugin to " + project.getName());
-
+        if (!project.getPlugins().hasPlugin(JAVA_PLUGIN) && !project.getPlugins().hasPlugin(JAVA_LIBRARY_PLUGIN)) {
+            project.getPluginManager().apply(JavaLibraryPlugin.class);
+        }
         project.getExtensions().create(EXTENSION_NAME, JigsawModule.class);
 
         configureJavaTasks(project);
@@ -66,15 +70,10 @@ public class JigsawPlugin implements Plugin<Project> {
         project.afterEvaluate(new Action<Project>() {
             @Override
             public void execute(Project project) {
-                if (project.getPlugins().hasPlugin(JAVA_PLUGIN)
-                        || project.getPlugins().hasPlugin(JAVA_LIBRARY_PLUGIN)) {
-                    configureCompileJavaTask(project);
-                    configureCompileTestJavaTask(project);
-                    configureJarTask(project);
-                    configureTestTask(project);
-                } else {
-                    throw new GradleException("You must apply the java or java-library plugin as well.");
-                }
+                configureCompileJavaTask(project);
+                configureCompileTestJavaTask(project);
+                configureJarTask(project);
+                configureTestTask(project);
                 if (project.getPlugins().hasPlugin(APPLICATION_PLUGIN)) {
                     configureRunTask(project);
                     configureStartScriptsTask(project);
@@ -83,31 +82,117 @@ public class JigsawPlugin implements Plugin<Project> {
         });
     }
 
-    private void configureRunTask(Project project) {
-        final JavaExec run = getRunTask(project);
-        final SourceSet main = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
+    private void configureCompileJavaTask(final Project project) {
+        final JavaCompile compileJava = (JavaCompile) project.getTasks().findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
         final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        final String moduleDir = String.format("%s%s%s",
+                compileJava.getDestinationDir(),
+                System.getProperty("path.separator"),
+                module.getName());
+        compileJava.getInputs().property("moduleName", module.getName());
+        compileJava.doFirst(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                List<String> args = new ArrayList<>();
+                args.add("--module-path");
+                args.add(compileJava.getClasspath().getAsPath());
+                args.add("-d");
+                args.add(moduleDir);
+                compileJava.getOptions().setCompilerArgs(args);
+                compileJava.setClasspath(project.files());
+            }
+        });
+        compileJava.doLast(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                project.copy(new Action<CopySpec>() {
+                    @Override
+                    public void execute(CopySpec copySpec) {
+                        copySpec.from(moduleDir);
+                        copySpec.into(compileJava.getDestinationDir());
+                    }
+                });
+            }
+        });
+    }
+
+    private void configureCompileTestJavaTask(final Project project) {
+        final JavaCompile compileTestJava = (JavaCompile) project.getTasks()
+                .findByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME);
+        final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        compileTestJava.getInputs().property("moduleName", module.getName());
+        compileTestJava.doFirst(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                List<String> args = new ArrayList<>();
+                args.add("--module-path");
+                args.add(compileTestJava.getClasspath().getAsPath());
+                args.add("--add-modules");
+                args.add("junit");
+                args.add("--add-reads");
+                args.add(String.format("%s=junit", module.getName()));
+                args.add("--patch-module");
+                args.add(String.format("%s=%s", module.getName(), test.getJava().getSourceDirectories().getAsPath()));
+                compileTestJava.getOptions().setCompilerArgs(args);
+                compileTestJava.setClasspath(project.files());
+            }
+        });
+    }
+
+    private void configureJarTask(final Project project) {
+        final Jar jar = (Jar) project.getTasks().findByName(JavaPlugin.JAR_TASK_NAME);
+        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        jar.getInputs().property("moduleName", module.getName());
+        jar.exclude(module.getName());
+    }
+
+    private void configureTestTask(Project project) {
+        final Test testTask = (Test) project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
+        final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        testTask.getInputs().property("moduleName", module.getName());
+        testTask.doFirst(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                List<String> args = new ArrayList<>();
+                args.add("--module-path");
+                args.add(testTask.getClasspath().getAsPath());
+                args.add("--add-modules");
+                args.add("ALL-MODULE-PATH");
+                args.add("--add-reads");
+                args.add(String.format("%s=junit", module.getName()));
+                args.add("--patch-module");
+                args.add(String.format("%s=%s", module.getName(), test.getJava().getOutputDir()));
+                testTask.setJvmArgs(args);
+                testTask.setClasspath(project.files());
+            }
+        });
+    }
+
+    private void configureRunTask(Project project) {
+        final JavaExec run = (JavaExec) project.getTasks().findByName(ApplicationPlugin.TASK_RUN_NAME);
+        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        run.getInputs().property("moduleName", module.getName());
         run.doFirst(new Action<Task>() {
             @Override
             public void execute(Task task) {
-                run.setClasspath(project.files());
                 List<String> args = new ArrayList<>();
                 args.add("--module-path");
-                args.add(project.files(
-                        main.getJava().getOutputDir(),
-                        project.getConfigurations().getByName("runtimeClasspath")).getAsPath());
+                args.add(run.getClasspath().getAsPath());
                 args.add("--module");
                 args.add(String.format("%s/%s", module.getName(), run.getMain()));
                 run.setJvmArgs(args);
+                run.setClasspath(project.files());
             }
         });
     }
 
     private void configureStartScriptsTask(Project project) {
-        final CreateStartScripts startScripts = getStartScriptsTask(project);
-        final SourceSet main = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
-        final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+        final CreateStartScripts startScripts = (CreateStartScripts) project.getTasks()
+                .findByName(ApplicationPlugin.TASK_START_SCRIPTS_NAME);
         final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
+        startScripts.getInputs().property("moduleName", module.getName());
         startScripts.doFirst(new Action<Task>() {
             @Override
             public void execute(Task task) {
@@ -141,156 +226,5 @@ public class JigsawPlugin implements Plugin<Project> {
         } catch (IOException e) {
             throw new GradleException(String.format("Couldn't replace placeholder in  %s", path));
         }
-    }
-
-    private void configureTestTask(Project project) {
-        final Test testTask = getTestTask(project);
-        final SourceSet main = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
-        final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
-        testTask.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                testTask.setClasspath(project.files());
-                List<String> args = new ArrayList<>();
-                args.add("--module-path");
-                args.add(project.files(
-                        main.getJava().getOutputDir(),
-                        project.getConfigurations().getByName("testRuntimeClasspath")).getAsPath());
-                args.add("--add-modules");
-                args.add("ALL-MODULE-PATH");
-                args.add("--add-reads");
-                args.add(String.format("%s=junit", module.getName()));
-                args.add("--patch-module");
-                args.add(String.format("%s=%s", module.getName(), test.getJava().getOutputDir()));
-                testTask.setJvmArgs(args);
-            }
-        });
-    }
-
-    private void configureJarTask(final Project project) {
-        final Jar jar = getJarTask(project);
-        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
-        jar.exclude(module.getName());
-    }
-
-    private void configureCompileJavaTask(final Project project) {
-        final JavaCompile compileJava = getCompileJavaTask(project);
-        final SourceSet main = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
-        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
-        final String moduleDir = String.format("%s%s%s",
-                main.getJava().getOutputDir(),
-                System.getProperty("path.separator"),
-                module.getName());
-        compileJava.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                compileJava.setClasspath(project.files());
-                List<String> args = new ArrayList<>();
-                args.add("--module-path");
-                args.add(project.getConfigurations().getByName("compileClasspath").getAsPath());
-                args.add("--source-path");
-                args.add(project.files(main.getJava().getSourceDirectories()).getAsPath());
-                args.add("-d");
-                args.add(moduleDir);
-                compileJava.getOptions().setCompilerArgs(args);
-            }
-        });
-        compileJava.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                project.copy(new Action<CopySpec>() {
-                    @Override
-                    public void execute(CopySpec copySpec) {
-                        copySpec.from(moduleDir);
-                        copySpec.into(main.getJava().getOutputDir());
-                    }
-                });
-            }
-        });
-    }
-
-    private void configureCompileTestJavaTask(final Project project) {
-        final JavaCompile compileTestJava = getCompileTestJavaTask(project);
-        final SourceSet main = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
-        final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-        final JigsawModule module = (JigsawModule) project.getExtensions().getByName(EXTENSION_NAME);
-        compileTestJava.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                compileTestJava.setClasspath(project.files());
-                List<String> args = new ArrayList<>();
-                args.add("--module-path");
-                args.add(project.files(
-                        main.getJava().getOutputDir(),
-                        project.getConfigurations().getByName("testCompileClasspath")).getAsPath());
-                args.add("--add-modules");
-                args.add("junit");
-                args.add("--add-reads");
-                args.add(String.format("%s=junit", module.getName()));
-                args.add("--patch-module");
-                args.add(String.format("%s=%s", module.getName(), test.getJava().getSourceDirectories().getAsPath()));
-                compileTestJava.getOptions().setCompilerArgs(args);
-            }
-        });
-    }
-
-    private JavaExec getRunTask(Project project) {
-        Set<JavaExec> tasks = project.getTasks().withType(JavaExec.class);
-        for (JavaExec task : tasks) {
-            if (task.getName().equals("run")) {
-                return task;
-            }
-        }
-        throw new GradleException("No Exec task named run.");
-    }
-
-    private CreateStartScripts getStartScriptsTask(Project project) {
-        Set<CreateStartScripts> tasks = project.getTasks().withType(CreateStartScripts.class);
-        for (CreateStartScripts task : tasks) {
-            if (task.getName().equals("startScripts")) {
-                return task;
-            }
-        }
-        throw new GradleException("No CreateStartScripts task named createStartScripts.");
-    }
-
-    private Test getTestTask(Project project) {
-        Set<Test> tasks = project.getTasks().withType(Test.class);
-        for (Test task : tasks) {
-            if (task.getName().equals("test")) {
-                return task;
-            }
-        }
-        throw new GradleException("No Test task named test.");
-    }
-
-    private JavaCompile getCompileTestJavaTask(Project project) {
-        return getJavaCompileTaskNamed(project, "compileTestJava");
-    }
-
-    private JavaCompile getCompileJavaTask(Project project) {
-        return getJavaCompileTaskNamed(project, "compileJava");
-    }
-
-    private Jar getJarTask(Project project) {
-        Set<Jar> tasks = project.getTasks().withType(Jar.class);
-        for (Jar task : tasks) {
-            if (task.getName().equals("jar")) {
-                return task;
-            }
-        }
-        throw new GradleException("No Jar task named jar.");
-    }
-
-    private JavaCompile getJavaCompileTaskNamed(Project project, String name) {
-        Set<JavaCompile> tasks = project.getTasks().withType(JavaCompile.class);
-        for (JavaCompile task : tasks) {
-            if (task.getName().equals(name)) {
-                return task;
-            }
-        }
-        throw new GradleException(String.format("No JavaCompile task named %s.", name));
-
     }
 }
