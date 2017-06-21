@@ -6,6 +6,9 @@ plugins {
 group = "org.gradle.java"
 version = "0.1.0"
 
+targetCompatibility = "1.6"
+sourceCompatibility = "1.7"
+
 publishing {
     repositories {
         maven {
