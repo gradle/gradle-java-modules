@@ -18,14 +18,14 @@ package org.gradle.java;
 /**
  * Represents information about a Java 9 module.
  */
-public class JigsawModule {
-    private String name;
+public class Architecture {
+    private String moduleName;
 
-    public String getName() {
-        return name;
+    public String getModuleName() {
+        return moduleName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setModuleName(String name) {
+        this.moduleName = name;
     }
 }
