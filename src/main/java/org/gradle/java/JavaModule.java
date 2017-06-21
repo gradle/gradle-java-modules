@@ -18,14 +18,14 @@ package org.gradle.java;
 /**
  * Represents information about a Java 9 module.
  */
-public class Architecture {
+public class JavaModule {
     private String moduleName;
 
-    public String getModuleName() {
+    public String geName() {
         return moduleName;
     }
 
-    public void setModuleName(String name) {
+    public void setName(String name) {
         this.moduleName = name;
     }
 }
