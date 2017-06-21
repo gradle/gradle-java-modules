@@ -1,5 +1,6 @@
 plugins {
     id "groovy"
+    id "idea"
     id "java-gradle-plugin"
     id "maven-publish"
 }
@@ -9,6 +10,9 @@ version = "0.1.0"
 
 targetCompatibility = "1.7"
 sourceCompatibility = "1.7"
+
+// Fix a bad interaction with IntelliJ and Gradle > 4.0
+idea.module.inheritOutputDirs = true
 
 repositories {
     jcenter()
