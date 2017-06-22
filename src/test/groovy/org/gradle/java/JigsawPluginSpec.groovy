@@ -32,6 +32,7 @@ class JigsawPluginSpec extends Specification {
         def buildFile = tmpDir.newFile("build.gradle")
         buildFile << """
 plugins {
+  id 'application'
   id 'org.gradle.java.experimental-jigsaw' version '0.1.0'
 }
 
@@ -44,6 +45,7 @@ dependencies {
 }
 
 javaModule.name = 'test.module'
+mainClassName = 'io.example.AClass'
 """
         def settingsFile = tmpDir.newFile("settings.gradle")
         settingsFile << """
@@ -120,5 +122,17 @@ public class AClassTest {
 
         then:
         result.task(":test").outcome == SUCCESS
+    }
+
+    @IgnoreIf({NOT_JAVA_9})
+    def "can run with a module"() {
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(tmpDir.root)
+                .withArguments("run")
+                .withPluginClasspath().build()
+
+        then:
+        result.output.contains("Hello World!")
     }
 }
