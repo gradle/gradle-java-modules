@@ -16,7 +16,7 @@ If you already have a working Java project, applying the plugin is just two step
  1. Apply the plugin:
     ```groovy
     plugins {
-      id 'org.gradle.java.experimental-jigsaw' version '0.1.0'
+      id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
     }
     ```
  2. Set the module name:

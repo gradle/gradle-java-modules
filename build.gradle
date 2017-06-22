@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'org.gradle.java'
-version = '0.1.0'
+version = '0.1.1'
 
 targetCompatibility = '1.7'
 sourceCompatibility = '1.7'
