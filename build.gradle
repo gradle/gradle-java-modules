@@ -1,18 +1,21 @@
 plugins {
-    id "groovy"
-    id "idea"
-    id "java-gradle-plugin"
-    id "maven-publish"
+    id 'groovy'
+    id 'idea'
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '0.9.7'
 }
 
-group = "org.gradle.java"
-version = "0.1.0"
+group = 'org.gradle.java'
+version = '0.1.0'
 
-targetCompatibility = "1.7"
-sourceCompatibility = "1.7"
+targetCompatibility = '1.7'
+sourceCompatibility = '1.7'
 
 // Fix a bad interaction with IntelliJ and Gradle > 4.0
 idea.module.inheritOutputDirs = true
+
+// make the publishing plugin skip checks that disallow publishing to com.gradle / org.gradle groups
+System.setProperty('gradle.publish.skip.namespace.check', 'true')
 
 repositories {
     jcenter()
@@ -29,6 +32,20 @@ gradlePlugin {
         experimentalJigsawPlugin {
             id = "org.gradle.java.experimental-jigsaw"
             implementationClass = "org.gradle.java.JigsawPlugin"
+        }
+    }
+}
+
+pluginBundle {
+    website = 'https://gradle.org'
+    vcsUrl = 'https://github.com/gradle/gradle-java-modules'
+    plugins {
+        experimentalJigsawPlugin {
+            id = 'org.gradle.java.experimental-jigsaw'
+            displayName = 'Experimental Jigsaw Plugin'
+            description = 'Experiment with Java 9 modules before they are officially supported.'
+            tags = ['jigsaw', 'modules', 'java9']
+            version = project.version
         }
     }
 }
