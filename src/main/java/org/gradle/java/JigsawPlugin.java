@@ -20,7 +20,6 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.CopySpec;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ApplicationPlugin;
@@ -32,7 +31,6 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.jvm.application.tasks.CreateStartScripts;
-import org.gradle.jvm.tasks.Jar;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,10 +42,6 @@ import java.util.List;
 
 public class JigsawPlugin implements Plugin<Project> {
     private static final Logger LOGGER = Logging.getLogger(JigsawPlugin.class);
-
-    private static final String JAVA_PLUGIN = "org.gradle.java";
-
-    private static final String JAVA_LIBRARY_PLUGIN = "org.gradle.java-library";
 
     private static final String APPLICATION_PLUGIN = "application";
 
@@ -70,7 +64,6 @@ public class JigsawPlugin implements Plugin<Project> {
             public void execute(final Project project) {
                 configureCompileJavaTask(project);
                 configureCompileTestJavaTask(project);
-                configureJarTask(project);
                 configureTestTask(project);
                 project.getPluginManager().withPlugin(APPLICATION_PLUGIN, new Action<AppliedPlugin>() {
                     @Override
@@ -85,32 +78,14 @@ public class JigsawPlugin implements Plugin<Project> {
 
     private void configureCompileJavaTask(final Project project) {
         final JavaCompile compileJava = (JavaCompile) project.getTasks().findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-        final String moduleDir =
-                compileJava.getDestinationDir().toString() + System.getProperty("file.separator") + module.geName();
-        compileJava.getInputs().property("moduleName", module.geName());
         compileJava.doFirst(new Action<Task>() {
             @Override
             public void execute(Task task) {
                 List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(compileJava.getClasspath().getAsPath());
-                args.add("-d");
-                args.add(moduleDir);
                 compileJava.getOptions().setCompilerArgs(args);
                 compileJava.setClasspath(project.files());
-            }
-        });
-        compileJava.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                project.copy(new Action<CopySpec>() {
-                    @Override
-                    public void execute(CopySpec copySpec) {
-                        copySpec.from(moduleDir);
-                        copySpec.into(compileJava.getDestinationDir());
-                    }
-                });
             }
         });
     }
@@ -137,13 +112,6 @@ public class JigsawPlugin implements Plugin<Project> {
                 compileTestJava.setClasspath(project.files());
             }
         });
-    }
-
-    private void configureJarTask(final Project project) {
-        final Jar jar = (Jar) project.getTasks().findByName(JavaPlugin.JAR_TASK_NAME);
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-        jar.getInputs().property("moduleName", module.geName());
-        jar.exclude(module.geName());
     }
 
     private void configureTestTask(final Project project) {

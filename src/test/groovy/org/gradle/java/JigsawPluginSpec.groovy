@@ -108,8 +108,6 @@ public class AClassTest {
         new File(tmpDir.root, "build/libs/modular.jar").exists()
         new File(tmpDir.root, "build/classes/java/main/module-info.class").exists()
         new File(tmpDir.root, "build/classes/java/main/io/example/AClass.class").exists()
-        new File(tmpDir.root, "build/classes/java/main/test.module/module-info.class").exists()
-        new File(tmpDir.root, "build/classes/java/main/test.module/io/example/AClass.class").exists()
     }
 
     @IgnoreIf({NOT_JAVA_9})
