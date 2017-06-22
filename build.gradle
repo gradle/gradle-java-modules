@@ -37,7 +37,7 @@ gradlePlugin {
 }
 
 pluginBundle {
-    website = 'https://gradle.org'
+    website = 'https://guides.gradle.com/building-java-9-modules'
     vcsUrl = 'https://github.com/gradle/gradle-java-modules'
     plugins {
         experimentalJigsawPlugin {
