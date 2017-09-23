@@ -23,3 +23,16 @@ If you already have a working Java project, applying the plugin is just two step
     ```groovy
     javaModule.name = '<your-module-name>'
     ```
+
+## Unit tests
+
+The supported test engines are JUnit 4 and 5. The additional test modules (e.g. mocking library) can also be configured:
+
+```groovy
+javaModule.testModules = ['mockito.core']
+
+dependencies {
+   testCompile('org.mockito:mockito-core:x.y.z')
+   // other test dependencies
+}
+```

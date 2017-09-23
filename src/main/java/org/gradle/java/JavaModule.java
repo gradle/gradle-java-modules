@@ -15,11 +15,15 @@
  */
 package org.gradle.java;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents information about a Java 9 module.
  */
 public class JavaModule {
     private String moduleName;
+    private List<String> testModules = new ArrayList<>();
 
     public String geName() {
         return moduleName;
@@ -27,5 +31,13 @@ public class JavaModule {
 
     public void setName(String name) {
         this.moduleName = name;
+    }
+
+    public List<String> getTestModules() {
+        return testModules;
+    }
+
+    public void setTestModules(List<String> testModules) {
+        this.testModules = testModules;
     }
 }

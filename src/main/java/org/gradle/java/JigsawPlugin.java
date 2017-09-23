@@ -15,11 +15,7 @@
  */
 package org.gradle.java;
 
-import org.gradle.api.Action;
-import org.gradle.api.GradleException;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.*;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ApplicationPlugin;
@@ -30,6 +26,9 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.java.tests.JUnit4;
+import org.gradle.java.tests.JUnit5;
+import org.gradle.java.tests.NoTestEngine;
 import org.gradle.jvm.application.tasks.CreateStartScripts;
 
 import java.io.File;
@@ -49,6 +48,12 @@ public class JigsawPlugin implements Plugin<Project> {
 
     private static final String LIBS_PLACEHOLDER = "APP_HOME_LIBS_PLACEHOLDER";
 
+    private static final TestEngine[] TEST_ENGINES = {
+        new JUnit4(),
+        new JUnit5(),
+        new NoTestEngine()
+    };
+
     @Override
     public void apply(Project project) {
         LOGGER.debug("Applying JigsawPlugin to " + project.getName());
@@ -58,13 +63,24 @@ public class JigsawPlugin implements Plugin<Project> {
         configureJavaTasks(project);
     }
 
+    private TestEngine selectTestEngine(Project project) {
+        for (TestEngine testEngine: TEST_ENGINES) {
+            if (testEngine.accepts(project)) {
+                return testEngine;
+            }
+        }
+        throw new GradleException("Unknown test engine.");
+    }
+
     private void configureJavaTasks(final Project project) {
         project.afterEvaluate(new Action<Project>() {
             @Override
             public void execute(final Project project) {
+                TestEngine selectedTestEngine = selectTestEngine(project);
+
                 configureCompileJavaTask(project);
-                configureCompileTestJavaTask(project);
-                configureTestTask(project);
+                configureCompileTestJavaTask(project, selectedTestEngine);
+                configureTestTask(project, selectedTestEngine);
                 project.getPluginManager().withPlugin(APPLICATION_PLUGIN, new Action<AppliedPlugin>() {
                     @Override
                     public void execute(AppliedPlugin appliedPlugin) {
@@ -90,51 +106,21 @@ public class JigsawPlugin implements Plugin<Project> {
         });
     }
 
-    private void configureCompileTestJavaTask(final Project project) {
+    private void configureCompileTestJavaTask(final Project project, final TestEngine selectedTestEngine) {
         final JavaCompile compileTestJava = (JavaCompile) project.getTasks()
                 .findByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME);
         final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
         final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
         compileTestJava.getInputs().property("moduleName", module.geName());
-        compileTestJava.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
-                args.add("--module-path");
-                args.add(compileTestJava.getClasspath().getAsPath());
-                args.add("--add-modules");
-                args.add("junit");
-                args.add("--add-reads");
-                args.add(module.geName() + "=junit");
-                args.add("--patch-module");
-                args.add(module.geName() + "=" + test.getJava().getSourceDirectories().getAsPath());
-                compileTestJava.getOptions().setCompilerArgs(args);
-                compileTestJava.setClasspath(project.files());
-            }
-        });
+        compileTestJava.doFirst(selectedTestEngine.createCompileTestJavaAction(project, test, compileTestJava, module));
     }
 
-    private void configureTestTask(final Project project) {
+    private void configureTestTask(final Project project, final TestEngine selectedTestEngine) {
         final Test testTask = (Test) project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
         final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
         final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
         testTask.getInputs().property("moduleName", module.geName());
-        testTask.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
-                args.add("--module-path");
-                args.add(testTask.getClasspath().getAsPath());
-                args.add("--add-modules");
-                args.add("ALL-MODULE-PATH");
-                args.add("--add-reads");
-                args.add(module.geName() + "=junit");
-                args.add("--patch-module");
-                args.add(module.geName() + "=" + test.getJava().getOutputDir());
-                testTask.setJvmArgs(args);
-                testTask.setClasspath(project.files());
-            }
-        });
+        testTask.doFirst(selectedTestEngine.createTestJavaAction(project, test, testTask, module));
     }
 
     private void configureRunTask(final Project project) {
