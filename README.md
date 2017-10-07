@@ -76,6 +76,6 @@ Note that patching options are not preserved in the output artifact. If the arch
 going to be used as a dependency for an executable JAR, you must add the `--patch-module` arguments to the `java`
 command manually.
 
-##License
+## License
 
 Apache License 2.0
