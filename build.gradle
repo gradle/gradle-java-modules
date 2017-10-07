@@ -8,8 +8,8 @@ plugins {
 group = 'com.zyxist'
 version = '0.1.2'
 
-targetCompatibility = '1.9'
-sourceCompatibility = '1.9'
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
 
 // Fix a bad interaction with IntelliJ and Gradle > 4.0
 idea.module.inheritOutputDirs = true
@@ -37,7 +37,7 @@ pluginBundle {
 	website = 'https://github.com/zyxist/chainsaw'
 	vcsUrl = 'https://github.com/zyxist/chainsaw'
 	plugins {
-		experimentalJigsawPlugin {
+		chainsawPlugin {
 			id = 'com.zyxist.chainsaw'
 			displayName = 'Chainsaw: Java 9 Jigsaw support'
 			description = 'A plugin that adds the support for building and testing modular JDK9 applications with Gradle. '

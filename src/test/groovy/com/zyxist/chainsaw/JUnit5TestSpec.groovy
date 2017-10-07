@@ -18,12 +18,14 @@ package com.zyxist.chainsaw
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class JUnit5TestSpec extends Specification {
 	final static MOCKITO_MODULE = 'mockito.core'
+	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
 
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
@@ -80,6 +82,7 @@ public class AClassTest {
 """
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit5 tests with Mockito - java plugin way"() {
 		given:
 		def buildFile = tmpDir.newFile("build.gradle")
@@ -127,6 +130,7 @@ javaModule.extraTestModules = ['${MOCKITO_MODULE}']
 		result.task(":junitPlatformTest").outcome == SUCCESS
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit5 tests with Mockito - new way"() {
 		given:
 		def buildFile = tmpDir.newFile("build.gradle")

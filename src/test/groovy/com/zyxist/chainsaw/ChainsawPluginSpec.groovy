@@ -26,6 +26,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 class ChainsawPluginSpec extends Specification {
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
+	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
 
 	def setup() {
 		def buildFile = tmpDir.newFile("build.gradle")
@@ -96,6 +97,7 @@ public class AClassTest {
 """
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "can assemble a module"() {
 		when:
 		def result = GradleRunner.create()
@@ -111,6 +113,7 @@ public class AClassTest {
 		new File(tmpDir.root, "build/classes/java/main/com/example/AClass.class").exists()
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "can check a module"() {
 		when:
 		def result = GradleRunner.create()
@@ -124,6 +127,7 @@ public class AClassTest {
 		result.task(":test").outcome == SUCCESS
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "can run with a module"() {
 		when:
 		def result = GradleRunner.create()
