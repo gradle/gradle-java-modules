@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/zyxist/chainsaw.svg?branch=master)](https://travis-ci.org/zyxist/chainsaw)
+
 # Chainsaw
 
 A plugin for [Gradle](http://gradle.org) that adds a support for Java Platform Module System, also known as Jigsaw,
