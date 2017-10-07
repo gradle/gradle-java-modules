@@ -13,31 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.java;
+package com.zyxist.chainsaw.tests;
 
-import java.util.ArrayList;
+import org.gradle.api.Project;
+
+import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents information about a Java 9 module.
- */
-public class JavaModule {
-    private String moduleName;
-    private List<String> testModules = new ArrayList<>();
+public class NoTestEngine implements TestEngine {
 
-    public String geName() {
-        return moduleName;
+    @Override
+    public boolean accepts(Project project) {
+        return true;
     }
 
-    public void setName(String name) {
-        this.moduleName = name;
-    }
-
-    public List<String> getTestModules() {
-        return testModules;
-    }
-
-    public void setTestModules(List<String> testModules) {
-        this.testModules = testModules;
+    @Override
+    public List<String> getTestEngineModules() {
+        return Collections.EMPTY_LIST;
     }
 }
