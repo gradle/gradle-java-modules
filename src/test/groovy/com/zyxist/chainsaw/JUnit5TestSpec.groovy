@@ -15,109 +15,46 @@
  */
 package com.zyxist.chainsaw
 
+import com.zyxist.chainsaw.builder.Dependencies
+import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.JUnit5SampleTestFactory.junit5TestWithMocks
+import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class JUnit5TestSpec extends Specification {
-	final static MOCKITO_MODULE = 'mockito.core'
 	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
 
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
+	JigsawProjectBuilder project
 
 	def setup() {
-		def settingsFile = tmpDir.newFile("settings.gradle")
-		settingsFile << """
-rootProject.name = "modular"
-"""
-		tmpDir.newFolder("src", "main", "java", "com", "example")
-		tmpDir.newFolder("src", "test", "java", "com", "example")
-
-		def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
-		moduleDescriptor << """
-module com.example {
-  exports com.example;
-}
-"""
-		def sourceFile = tmpDir.newFile("src/main/java/com/example/AClass.java")
-		sourceFile << """
-package com.example;
-public class AClass {
-  public void aMethod(String aString) {
-    System.out.println(aString);
-  }
-  
-  public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
-  }
-}
-"""
-		def testFile = tmpDir.newFile("src/test/java/com/example/AClassTest.java")
-		testFile << """
-package com.example;
-
-import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.mock;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class AClassTest {
-  @Test
-  public void isAnInstanceOfAClass() {
-      Object obj = mock(Object.class);
-      assertTrue(new AImplementation() instanceof AClass);
-  }
-  
-  static class AImplementation extends AClass {
-    @Override
-    public void aMethod(String aString) {
-        // Do nothing
-    }
-  }
-}
-"""
+		project = new JigsawProjectBuilder(tmpDir)
+		project.moduleName("com.example")
+			.packageName("com.example")
+			.exportedPackage("com.example")
+			.applyPlugin(Dependencies.JUNIT5_PLUGIN_DEPENDENCY, Dependencies.JUNIT5_PLUGIN_NAME)
+			.testCompileDependency(Dependencies.JUNIT5_API_DEPENDENCY)
+			.testCompileDependency(Dependencies.MOCKITO_DEPENDENCY)
+			.testRuntimeDependency(Dependencies.JUNIT5_ENGINE_DEPENDENCY)
+			.extraTestModule(Dependencies.MOCKITO_MODULE)
+			.createJavaFile(regularJavaClass("AClass"))
+			.createJavaTestFile(junit5TestWithMocks())
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit5 tests with Mockito - java plugin way"() {
 		given:
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
-    }
-}
-
-plugins {
-  id 'java'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-apply plugin: 'org.junit.platform.gradle.plugin'
-
-repositories {
-  mavenLocal()
-  jcenter()
-}
-
-dependencies {
-  testCompile 'org.mockito:mockito-core:2.10.0'
-  testCompile 'org.junit.jupiter:junit-jupiter-api:5.0.0'
-  testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
-}
-
-javaModule.name = 'com.example'
-javaModule.extraTestModules = ['${MOCKITO_MODULE}']
-"""
+		project
+			.gradleJavaPlugin("java")
+			.createGradleBuild()
+			.createModuleDescriptor()
 
 		when:
 		def result = GradleRunner.create()
@@ -133,39 +70,10 @@ javaModule.extraTestModules = ['${MOCKITO_MODULE}']
 	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit5 tests with Mockito - new way"() {
 		given:
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
-    }
-}
-
-plugins {
-  id 'application'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-apply plugin: 'org.junit.platform.gradle.plugin'
-
-repositories {
-  mavenLocal()
-  jcenter()
-}
-
-dependencies {
-  testImplementation 'org.mockito:mockito-core:2.10.0'
-  testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.0'
-  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.0.0'
-}
-
-javaModule.name = 'com.example'
-javaModule.extraTestModules = ['${MOCKITO_MODULE}']
-"""
+		project
+			.gradleJavaPlugin("application")
+			.createGradleBuild()
+			.createModuleDescriptor()
 
 		when:
 		def result = GradleRunner.create()

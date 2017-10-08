@@ -15,100 +15,48 @@
  */
 package com.zyxist.chainsaw
 
+import com.zyxist.chainsaw.builder.Dependencies
+import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4TestWithMocks
+import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class JUnit4TestSpec extends Specification {
-	final static MOCKITO_MODULE = 'mockito.core'
 	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
-
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
 
+	JigsawProjectBuilder project
+
 	def setup() {
-		def settingsFile = tmpDir.newFile("settings.gradle")
-		settingsFile << """
-rootProject.name = "modular"
-"""
-		tmpDir.newFolder("src", "main", "java", "com", "example")
-		tmpDir.newFolder("src", "test", "java", "com", "example")
-
-		def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
-		moduleDescriptor << """
-module com.example {
-  exports com.example;
-}
-"""
-		def sourceFile = tmpDir.newFile("src/main/java/com/example/AClass.java")
-		sourceFile << """
-package com.example;
-public class AClass {
-  public void aMethod(String aString) {
-    System.out.println(aString);
-  }
-  
-  public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
-  }
-}
-"""
-		def testFile = tmpDir.newFile("src/test/java/com/example/AClassTest.java")
-		testFile << """
-package com.example;
-
-import org.junit.Test;
-import static org.mockito.Mockito.mock;
-import static org.junit.Assert.assertTrue;
-
-public class AClassTest {
-  @Test
-  public void isAnInstanceOfAClass() {
-      Object obj = mock(Object.class);
-      assertTrue(new AImplementation() instanceof AClass);
-  }
-  
-  static class AImplementation extends AClass {
-    @Override
-    public void aMethod(String aString) {
-        // Do nothing
-    }
-  }
-}
-"""
+		project = new JigsawProjectBuilder(tmpDir)
+		project.moduleName("com.example")
+			.packageName("com.example")
+			.exportedPackage("com.example")
+			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
+			.testCompileDependency(Dependencies.MOCKITO_DEPENDENCY)
+			.extraTestModule(Dependencies.MOCKITO_MODULE)
+			.createJavaFile(regularJavaClass("AClass"))
+			.createJavaTestFile(junit4TestWithMocks())
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit4 tests with Mockito - java plugin way"() {
 		given:
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-plugins {
-  id 'java'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-repositories {
-  mavenLocal()
-  jcenter()
-}
-
-dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.mockito:mockito-core:2.10.0'
-}
-
-javaModule.name = 'com.example'
-javaModule.extraTestModules = ['${MOCKITO_MODULE}']
-"""
+		project
+			.gradleJavaPlugin("java")
+			.createGradleBuild()
+			.createModuleDescriptor()
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withArguments("check")
 				.withPluginClasspath().build()
 
@@ -119,26 +67,10 @@ javaModule.extraTestModules = ['${MOCKITO_MODULE}']
 	@IgnoreIf({NOT_JAVA_9})
 	def "run JUnit4 tests with Mockito - new way"() {
 		given:
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-plugins {
-  id 'application'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-repositories {
-  mavenLocal()
-  jcenter()
-}
-
-dependencies {
-  testImplementation 'junit:junit:4.12'
-  testImplementation 'org.mockito:mockito-core:2.10.0'
-}
-
-javaModule.name = 'com.example'
-javaModule.extraTestModules = ['${MOCKITO_MODULE}']
-"""
+		project
+			.gradleJavaPlugin("application")
+			.createGradleBuild()
+			.createModuleDescriptor()
 
 		when:
 		def result = GradleRunner.create()

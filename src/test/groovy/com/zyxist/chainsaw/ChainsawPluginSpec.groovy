@@ -15,12 +15,16 @@
  */
 package com.zyxist.chainsaw
 
+import com.zyxist.chainsaw.builder.Dependencies
+import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4Test
+import static com.zyxist.chainsaw.builder.factory.RunnableJavaClassFactory.runnableJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class ChainsawPluginSpec extends Specification {
@@ -28,80 +32,28 @@ class ChainsawPluginSpec extends Specification {
 	final TemporaryFolder tmpDir = new TemporaryFolder()
 	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
 
+	JigsawProjectBuilder project
+
 	def setup() {
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-plugins {
-  id 'application'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-repositories {
-  mavenLocal()
-  mavenCentral()
-}
-
-dependencies {
-  testImplementation 'junit:junit:4.12'
-}
-
-javaModule.name = 'com.example'
-mainClassName = 'com.example.AClass'
-"""
-		def settingsFile = tmpDir.newFile("settings.gradle")
-		settingsFile << """
-rootProject.name = "modular"
-"""
-		tmpDir.newFolder("src", "main", "java", "com", "example")
-		tmpDir.newFolder("src", "test", "java", "com", "example")
-
-		def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
-		moduleDescriptor << """
-module com.example {
-  exports com.example;
-}
-"""
-		def sourceFile = tmpDir.newFile("src/main/java/com/example/AClass.java")
-		sourceFile << """
-package com.example;
-public class AClass {
-  public void aMethod(String aString) {
-    System.out.println(aString);
-  }
-  
-  public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
-  }
-}
-"""
-		def testFile = tmpDir.newFile("src/test/java/com/example/AClassTest.java")
-		testFile << """
-package com.example;
-
-import org.junit.Test;
-import static org.junit.Assert.assertTrue;
-
-public class AClassTest {
-  @Test
-  public void isAnInstanceOfAClass() {
-      assertTrue(new AImplementation() instanceof AClass);
-  }
-  
-  static class AImplementation extends AClass {
-    @Override
-    public void aMethod(String aString) {
-        // Do nothing
-    }
-  }
-}
-"""
+		project = new JigsawProjectBuilder(tmpDir)
+		project
+			.moduleName("com.example")
+			.packageName("com.example")
+			.exportedPackage("com.example")
+			.gradleJavaPlugin("application")
+			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.createJavaTestFile(junit4Test())
+			.createModuleDescriptor()
+			.createGradleBuild()
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
 	def "can assemble a module"() {
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withArguments("assemble")
 				.withPluginClasspath().build()
 
@@ -117,7 +69,7 @@ public class AClassTest {
 	def "can check a module"() {
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withDebug(true)
 				.forwardOutput()
 				.withArguments("check")
@@ -131,7 +83,7 @@ public class AClassTest {
 	def "can run with a module"() {
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withArguments("run")
 				.withPluginClasspath().build()
 

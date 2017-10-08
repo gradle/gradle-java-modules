@@ -15,11 +15,13 @@
  */
 package com.zyxist.chainsaw.tasks
 
+import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.RunnableJavaClassFactory.runnableJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
@@ -27,51 +29,19 @@ class VerifyModuleNameTaskSpec extends Specification {
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
 
+	JigsawProjectBuilder project
+
 	def configureProjectWithModule(String moduleName) {
-		def buildFile = tmpDir.newFile("build.gradle")
-		buildFile << """
-plugins {
-  id 'application'
-  id 'com.zyxist.chainsaw' version '0.1.2'
-}
-
-repositories {
-  jcenter()
-}
-
-dependencies {
-  testImplementation 'junit:junit:4.12'
-}
-
-javaModule.name = '${moduleName}'
-mainClassName = 'com.example.AClass'
-"""
-		def settingsFile = tmpDir.newFile("settings.gradle")
-		settingsFile << """
-rootProject.name = "modular"
-"""
-		tmpDir.newFolder("src", "main", "java", "com", "example")
-		tmpDir.newFolder("src", "test", "java", "com", "example")
-
-		def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
-		moduleDescriptor << """
-module ${moduleName} {
-  exports com.example;
-}
-"""
-		def sourceFile = tmpDir.newFile("src/main/java/com/example/AClass.java")
-		sourceFile << """
-package com.example;
-public class AClass {
-  public void aMethod(String aString) {
-    System.out.println(aString);
-  }
-  
-  public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
-  }
-}
-"""
+		project = new JigsawProjectBuilder(tmpDir)
+		project
+			.moduleName(moduleName)
+			.packageName("com.example")
+			.exportedPackage("com.example")
+			.gradleJavaPlugin("application")
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.createModuleDescriptor()
+			.createGradleBuild()
 	}
 
 	def "succeeds for module named from the root package"() {
@@ -80,7 +50,7 @@ public class AClass {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withArguments("verifyModuleName")
 				.withPluginClasspath().build()
 
@@ -94,7 +64,7 @@ public class AClass {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
+				.withProjectDir(project.root)
 				.withArguments("verifyModuleName")
 				.withPluginClasspath()
 				.buildAndFail()
