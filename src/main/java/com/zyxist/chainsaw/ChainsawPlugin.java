@@ -61,7 +61,7 @@ public class ChainsawPlugin implements Plugin<Project> {
 		project.getPlugins().apply(JavaPlugin.class);
 		project.getExtensions().create(EXTENSION_NAME, JavaModule.class);
 		VerifyModuleNameTask vmnTask = project.getTasks().create(VERIFY_MODULE_NAME_TASK_NAME, VerifyModuleNameTask.class);
-		project.getTasks().getByPath("compileJava").dependsOn(VERIFY_MODULE_NAME_TASK_NAME);
+		vmnTask.dependsOn("compileJava");
 
 		configureJavaTasks(project);
 	}
