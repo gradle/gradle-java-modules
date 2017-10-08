@@ -19,6 +19,7 @@ import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.zyxist.chainsaw.builder.factory.RunnableJavaClassFactory.runnableJavaClass
@@ -26,6 +27,9 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class VerifyModuleNameTaskSpec extends Specification {
+
+	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
+
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
 
@@ -44,6 +48,7 @@ class VerifyModuleNameTaskSpec extends Specification {
 			.createGradleBuild()
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "succeeds for module named from the root package"() {
 		given:
 		configureProjectWithModule('com.example')
@@ -58,6 +63,7 @@ class VerifyModuleNameTaskSpec extends Specification {
 		result.task(":verifyModuleName").outcome == SUCCESS
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "fails for module with custom naming"() {
 		given:
 		configureProjectWithModule('test.module')

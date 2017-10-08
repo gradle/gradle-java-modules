@@ -25,6 +25,10 @@ dependencies {
 	}
 }
 
+test {
+	testLogging.showStandardStreams = true
+}
+
 gradlePlugin {
 	plugins {
 		chainsawPlugin {

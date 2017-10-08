@@ -1,3 +1,6 @@
 language: java
 jdk:
   - oraclejdk9
+
+install: echo "skip 'gradle assemble' step"
+script: ./gradlew clean build --stacktrace

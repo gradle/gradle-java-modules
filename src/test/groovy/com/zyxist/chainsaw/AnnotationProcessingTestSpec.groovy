@@ -49,6 +49,7 @@ class AnnotationProcessingTestSpec extends Specification {
 			.patchedModule(Dependencies.JSR305_PATCH, Dependencies.JSR250_PATCH)
 			.compileDependency(Dependencies.JSR250_DEPENDENCY)
 			.compileDependency(Dependencies.DAGGER_DEPENDENCY)
+			.aptDependency(Dependencies.JSR250_DEPENDENCY)
 			.aptDependency(Dependencies.DAGGER_COMPILER_DEPENDENCY)
 			.createJavaFile(regularJavaClass("SomeClass"))
 			.createJavaFile(daggerComponent())
@@ -68,7 +69,7 @@ class AnnotationProcessingTestSpec extends Specification {
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
 			.forwardOutput()
-			.withArguments("assemble")
+			.withArguments("--stacktrace", "assemble")
 			.withPluginClasspath().build()
 
 		then:
@@ -92,7 +93,7 @@ class AnnotationProcessingTestSpec extends Specification {
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
 			.forwardOutput()
-			.withArguments("run")
+			.withArguments("--stacktrace", "run")
 			.withPluginClasspath()
 			.build()
 

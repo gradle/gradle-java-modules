@@ -235,7 +235,6 @@ public class JigsawProjectBuilder {
 
 	private void generateRepositories(StringBuilder build) {
 		build.append("repositories {\n");
-		build.append("	mavenLocal()\n");
 		build.append("	jcenter()\n");
 		build.append("}\n");
 	}
