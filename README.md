@@ -15,7 +15,7 @@ If you already have a working Java project, applying the plugin is just two step
  1. Apply the plugin:
     ```groovy
     plugins {
-      id 'com.zyxist.chainsaw' version '0.1.2'
+      id 'com.zyxist.chainsaw' version '0.1.3'
     }
     ```
  2. Set the module name:
