@@ -1,12 +1,13 @@
 plugins {
 	id 'groovy'
 	id 'idea'
+	id 'maven-publish'
 	id 'java-gradle-plugin'
 	id 'com.gradle.plugin-publish' version '0.9.7'
 }
 
 group = 'com.zyxist'
-version = '0.1.2'
+version = '0.1.3'
 
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
@@ -40,7 +41,7 @@ pluginBundle {
 		chainsawPlugin {
 			id = 'com.zyxist.chainsaw'
 			displayName = 'Chainsaw: Java 9 Jigsaw support'
-			description = 'A plugin that adds the support for building and testing modular JDK9 applications with Gradle. '
+			description = 'Adds a support for building and testing modular JDK9 applications with Gradle. '
 			tags = ['jigsaw', 'modules', 'java9']
 			version = project.version
 		}
