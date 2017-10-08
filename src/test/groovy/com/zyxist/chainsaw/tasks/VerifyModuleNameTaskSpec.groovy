@@ -56,7 +56,7 @@ rootProject.name = "modular"
 		def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
 		moduleDescriptor << """
 module ${moduleName} {
-  exports io.example;
+  exports com.example;
 }
 """
 		def sourceFile = tmpDir.newFile("src/main/java/com/example/AClass.java")
