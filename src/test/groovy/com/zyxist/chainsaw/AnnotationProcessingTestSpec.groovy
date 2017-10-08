@@ -20,6 +20,7 @@ import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.zyxist.chainsaw.builder.factory.DaggerComponentFactory.daggerComponent
@@ -56,6 +57,7 @@ class AnnotationProcessingTestSpec extends Specification {
 			.mainClass("com.example.AClass")
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "chainsaw is able to build projects with annotation processors: Dagger scenario"() {
 		given:
 		project
@@ -79,6 +81,7 @@ class AnnotationProcessingTestSpec extends Specification {
 		new File(tmpDir.root, "build/classes/java/main/com/example/DaggerApplicationComponent.class").exists()
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "chainsaw is able to run projects with annotation processors: Dagger scenario"() {
 		given:
 		project
