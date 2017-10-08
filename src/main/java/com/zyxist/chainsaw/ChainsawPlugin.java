@@ -15,9 +15,11 @@
  */
 package com.zyxist.chainsaw;
 
+import com.zyxist.chainsaw.algorithms.ModulePatcher;
 import com.zyxist.chainsaw.tasks.VerifyModuleNameTask;
 import com.zyxist.chainsaw.tests.*;
 import org.gradle.api.*;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ApplicationPlugin;
@@ -35,13 +37,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ChainsawPlugin implements Plugin<Project> {
 	private static final Logger LOGGER = Logging.getLogger(ChainsawPlugin.class);
 
 	private static final String APPLICATION_PLUGIN = "application";
+
+	private static final String PATCH_CONFIGURATION_NAME = "patch";
 
 	private static final String EXTENSION_NAME = "javaModule";
 
@@ -59,11 +62,28 @@ public class ChainsawPlugin implements Plugin<Project> {
 	public void apply(Project project) {
 		LOGGER.debug("Applying ChainsawPlugin to " + project.getName());
 		project.getPlugins().apply(JavaPlugin.class);
+		Configuration cfg = project.getConfigurations().create(PATCH_CONFIGURATION_NAME);
+		cfg.setDescription("Dependencies that break Java Module System rules and need to be added as patches to other modules.");
+
 		project.getExtensions().create(EXTENSION_NAME, JavaModule.class);
 		VerifyModuleNameTask vmnTask = project.getTasks().create(VERIFY_MODULE_NAME_TASK_NAME, VerifyModuleNameTask.class);
 		vmnTask.dependsOn("compileJava");
 
+		removePatchedDependencies(project, cfg);
 		configureJavaTasks(project);
+	}
+
+	private void removePatchedDependencies(Project project, Configuration patchConfig) {
+		project.getConfigurations().all(cfg -> {
+			if (!cfg.getName().equals(PATCH_CONFIGURATION_NAME)) {
+				patchConfig.getDependencies().all(dependency -> {
+					Map<String, String> exclusion = new LinkedHashMap<>();
+					exclusion.put("group", dependency.getGroup());
+					exclusion.put("module", dependency.getName());
+					cfg.exclude(exclusion);
+				});
+			}
+		});
 	}
 
 	private TestEngine selectTestEngine(Project project) {
@@ -100,9 +120,19 @@ public class ChainsawPlugin implements Plugin<Project> {
 		compileJava.doFirst(new Action<Task>() {
 			@Override
 			public void execute(Task task) {
+				final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+
 				List<String> args = new ArrayList<>();
 				args.add("--module-path");
 				args.add(compileJava.getClasspath().getAsPath());
+
+				ModulePatcher patcher = new ModulePatcher(module.getPatchModules());
+				List<String> patches = patcher.patchFrom(project, PATCH_CONFIGURATION_NAME);
+				if (!patches.isEmpty()) {
+					args.add("--patch-module");
+					args.add(String.join(",", patches));
+				}
+
 				compileJava.getOptions().setCompilerArgs(args);
 				compileJava.setClasspath(project.files());
 			}

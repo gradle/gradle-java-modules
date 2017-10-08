@@ -58,25 +58,48 @@ dependencies {
 
 ## Patching
 
-(to be implemented)
-
 Some commonly used dependencies violate the *no package split* rule. For example, `javax.validation` package can be
 found in several JAR-s: `jsr305`, `jsr250`, and the deprecated JDK module `java.xml.ws.annotation`. By default, they
 cannot be used together, unless we patch them. Module patching is a way to combine multiple JAR archives into a
 single automatic module in runtime that helps dealing with the issue, until the correctly packaged alternatives
 become available.
 
+In the example below, our project is already using official JSR-250 as a dependency. We want to add a dependency to
+Google Guava, which (as of version 23.1) is known to use rogue JAR `jsr305`. Both dependencies cannot co-exist together,
+because of a package split. We can patch `jsr250.api` module to include all the annotations from `jsr305`:
+ 
+
 ```groovy
-javaModule.patchModules = [
-    'jsr305:jsr305' => 'jsr250'
-    'group:dependency' => 'destinationModule'
-]
+javaModule.patchModules 'com.google.code.findbugs:jsr305': 'javax.annotation:jsr250-api'
+
+dependencies {
+    patch 'com.google.code.findbugs:jsr305:1.3.9'
+    
+    compile 'javax.annotation:jsr250-api:1.0'
+    compile 'com.google.guava:guava:23.1-jre'
+}
 ```
 
+The module descriptor would look like this:
 
-Note that patching options are not preserved in the output artifact. If the archive is an executable JAR, or it is
-going to be used as a dependency for an executable JAR, you must add the `--patch-module` arguments to the `java`
-command manually.
+```java
+module com.example.application {
+    requires jsr250.api; // warning: this module name is generated and it is not safe to rely on it!
+    requires guava; // warning: this module name is generated and it is not safe to rely on it!
+}
+```
+
+How patching works:
+
+ * the patched dependency must be added to `patch` configuration,
+ * the plugin removes the patched dependencies from all other configurations,
+ * the plugin generates the necessary `--patch-module` flags for the compiler and JVM.
+ 
+Usage notes:
+ * If you are using the annotation processing plugin `net.ltgt.apt`, the plugin must be applied AFTER Chainsaw!
+ * Patching works for compiling, testing and running the application from Gradle. However, if you are going
+to run the executable JAR manually, e.g. using a shell script, you have to add all the necessary `--patch-module` command
+line switches to the JVM on your own.
 
 ## License
 

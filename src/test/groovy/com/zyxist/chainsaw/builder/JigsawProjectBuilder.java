@@ -184,41 +184,16 @@ public class JigsawProjectBuilder {
 			generateBuildscript(build);
 		}
 
-		build.append("plugins {\n");
-		build.append("	id '"+javaPlugin+"'\n");
-		if (useApt) {
-			build.append("	id 'net.ltgt.apt:0.12'\n");
-		}
-		build.append("	id 'com.zyxist.chainsaw' version '0.1.3'\n");
-		build.append("}\n");
-
+		generatePluginSection(build);
 		generateApplyPluginSection(build);
 
-		build.append("repositories {\n");
-		build.append("	mavenLocal()\n");
-		build.append("	jcenter()\n");
-		build.append("}\n");
-
-		build.append("dependencies {\n");
-		if (javaPlugin.equals("java")) {
-			generateJavaPluginDependencies(build);
-		} else {
-			generateApplicationPluginDependencies(build);
+		if (useApt) {
+			generateAnnotationProcessingSourceSets(build);
 		}
-
-		build.append("}\n");
-
-		if (null != mainClassName) {
-			build.append("mainClassName = '"+mainClassName+"'\n");
-		}
-
-		build.append("javaModule.name = '" + moduleName+"'\n");
-		if (!extraTestModules.isEmpty()) {
-			build.append("javaModule.extraTestModules = ['" + String.join("', '", extraTestModules) + "']\n");
-		}
-		if (!patchConfig.isEmpty()) {
-			build.append("javaModule.patchModules " + String.join(",\n", patchConfig) + "\n");
-		}
+		generateRepositories(build);
+		generateDependencies(build);
+		generateApplicationConfig(build);
+		generateJavaModuleConfig(build);
 
 		File file = tmpDir.newFile("build.gradle");
 		ResourceGroovyMethods.leftShift(file, build.toString());
@@ -227,6 +202,62 @@ public class JigsawProjectBuilder {
 		ResourceGroovyMethods.leftShift(settingsfile, "rootProject.name = 'modular'\n");
 
 		return this;
+	}
+
+	private void generateApplicationConfig(StringBuilder build) {
+		if (null != mainClassName) {
+			build.append("mainClassName = '"+mainClassName+"'\n");
+		}
+	}
+
+	private void generateJavaModuleConfig(StringBuilder build) {
+		build.append("javaModule.name = '" + moduleName+"'\n");
+		if (!extraTestModules.isEmpty()) {
+			build.append("javaModule.extraTestModules = ['" + String.join("', '", extraTestModules) + "']\n");
+		}
+		if (!patchConfig.isEmpty()) {
+			build.append("javaModule.patchModules " + String.join(",\n", patchConfig) + "\n");
+		}
+	}
+
+	private void generateDependencies(StringBuilder build) {
+		build.append("dependencies {\n");
+		if (javaPlugin.equals("java")) {
+			generateJavaPluginDependencies(build);
+		} else if (javaPlugin.equals("application")) {
+			generateApplicationPluginDependencies(build);
+		} else {
+			generateLibraryPluginDependencies(build);
+		}
+
+		build.append("}\n");
+	}
+
+	private void generateRepositories(StringBuilder build) {
+		build.append("repositories {\n");
+		build.append("	mavenLocal()\n");
+		build.append("	jcenter()\n");
+		build.append("}\n");
+	}
+
+	private void generatePluginSection(StringBuilder build) {
+		build.append("plugins {\n");
+		build.append("	id '"+javaPlugin+"'\n");
+		if (useApt) {
+			build.append("	id 'net.ltgt.apt' version '0.12'\n");
+		}
+		build.append("	id 'com.zyxist.chainsaw' version '0.1.3'\n");
+		build.append("}\n");
+	}
+
+	private void generateAnnotationProcessingSourceSets(StringBuilder build) {
+		build.append("sourceSets {\n");
+		build.append("	main {\n");
+		build.append("		java {\n");
+		build.append("			srcDirs = ['src/main/java', 'build/generated/source/apt/main']\n");
+		build.append("		}\n");
+		build.append("	}\n");
+		build.append("}\n\n");
 	}
 
 	private void generateBuildscript(StringBuilder build) {
@@ -249,7 +280,7 @@ public class JigsawProjectBuilder {
 		}
 	}
 
-	private void generateApplicationPluginDependencies(StringBuilder build) {
+	private void generateLibraryPluginDependencies(StringBuilder build) {
 		for (String dep: patchDependencies) {
 			build.append("	patch '"+dep+"'\n");
 		}
@@ -258,6 +289,27 @@ public class JigsawProjectBuilder {
 		}
 		for (String dep: runtimeDependencies) {
 			build.append("	implementation '"+dep+"'\n");
+		}
+		for (String dep: testCompileDependencies) {
+			build.append("	testImplementation '"+dep+"'\n");
+		}
+		for (String dep: testRuntimeDependencies) {
+			build.append("	testRuntimeOnly '"+dep+"'\n");
+		}
+		for (String dep: aptDependencies) {
+			build.append("	apt '"+dep+"'\n");
+		}
+	}
+
+	private void generateApplicationPluginDependencies(StringBuilder build) {
+		for (String dep: patchDependencies) {
+			build.append("	patch '"+dep+"'\n");
+		}
+		for (String dep: compileDependencies) {
+			build.append("	compile '"+dep+"'\n");
+		}
+		for (String dep: runtimeDependencies) {
+			build.append("	runtime '"+dep+"'\n");
 		}
 		for (String dep: testCompileDependencies) {
 			build.append("	testImplementation '"+dep+"'\n");
@@ -296,9 +348,13 @@ public class JigsawProjectBuilder {
 	}
 
 	private void createDirectories(String path) throws IOException {
-		String[] splitPath = path.split("/");
+				String[] splitPath = path.split("/");
 		String[] updatedPath = new String[splitPath.length - 1];
 		System.arraycopy(splitPath, 0, updatedPath, 0, splitPath.length - 1);
-		tmpDir.newFolder(updatedPath);
+
+		File check = new File(tmpDir.getRoot(), String.join("/", updatedPath));
+		if (!check.exists()) {
+			tmpDir.newFolder(updatedPath);
+		}
 	}
 }
