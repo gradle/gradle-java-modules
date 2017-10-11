@@ -35,10 +35,11 @@ class VerifyModuleNameTaskSpec extends Specification {
 
 	JigsawProjectBuilder project
 
-	def configureProjectWithModule(String moduleName) {
+	def configureProjectWithModule(String moduleName, boolean violations) {
 		project = new JigsawProjectBuilder(tmpDir)
 		project
 			.moduleName(moduleName)
+			.allowNameViolations(violations)
 			.packageName("com.example")
 			.exportedPackage("com.example")
 			.gradleJavaPlugin("application")
@@ -51,7 +52,7 @@ class VerifyModuleNameTaskSpec extends Specification {
 	@IgnoreIf({NOT_JAVA_9})
 	def "succeeds for module named from the root package"() {
 		given:
-		configureProjectWithModule('com.example')
+		configureProjectWithModule('com.example', false)
 
 		when:
 		def result = GradleRunner.create()
@@ -66,7 +67,7 @@ class VerifyModuleNameTaskSpec extends Specification {
 	@IgnoreIf({NOT_JAVA_9})
 	def "fails for module with custom naming"() {
 		given:
-		configureProjectWithModule('test.module')
+		configureProjectWithModule('test.module', false)
 
 		when:
 		def result = GradleRunner.create()
@@ -76,6 +77,24 @@ class VerifyModuleNameTaskSpec extends Specification {
 				.buildAndFail()
 
 		then:
+		result.output.contains("The module name 'test.module' does not follow the official module naming convention for Java (reverse-DNS style, derived from the root package).")
 		result.task(":verifyModuleName").outcome == FAILED
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "prints a message, if violations have been allowed"() {
+		given:
+		configureProjectWithModule('test.module', true)
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withArguments("verifyModuleName")
+			.withPluginClasspath()
+			.build()
+
+		then:
+		result.output.contains("The module name 'test.module' does not follow the official module naming convention for Java (reverse-DNS style, derived from the root package).")
+		result.task(":verifyModuleName").outcome == SUCCESS
 	}
 }

@@ -35,6 +35,7 @@ public class JigsawProjectBuilder {
 	private String moduleName = DEFAULT_MODULE_NAME;
 	private String mainClassName = null;
 	private boolean useApt = false;
+	private boolean allowNameViolations = false;
 
 	private final List<String> applyPluginClasspath = new ArrayList<>();
 	private final List<String> appliedPlugins = new ArrayList<>();
@@ -70,6 +71,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder mainClass(String name) {
 		this.mainClassName = name;
+		return this;
+	}
+
+	public JigsawProjectBuilder allowNameViolations(boolean value) {
+		this.allowNameViolations = value;
 		return this;
 	}
 
@@ -212,6 +218,9 @@ public class JigsawProjectBuilder {
 
 	private void generateJavaModuleConfig(StringBuilder build) {
 		build.append("javaModule.name = '" + moduleName+"'\n");
+		if (allowNameViolations) {
+			build.append("javaModule.allowModuleNamingViolations = true\n");
+		}
 		if (!extraTestModules.isEmpty()) {
 			build.append("javaModule.extraTestModules = ['" + String.join("', '", extraTestModules) + "']\n");
 		}

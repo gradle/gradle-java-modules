@@ -16,7 +16,7 @@ If you already have a working Java project, applying the plugin is just two step
  1. Apply the plugin:
     ```groovy
     plugins {
-      id 'com.zyxist.chainsaw' version '0.1.3'
+      id 'com.zyxist.chainsaw' version 'x.y.z'
     }
     ```
  2. Set the module name:
@@ -33,7 +33,7 @@ module from the root package. By default, the plugin enforces this convention an
 root package in `/src/main/java` corresponding to the module name.
 
 If you are migrating an existing code to modules, and the module name cannot match the recommendation, you can disable
-the check (to be implemented):
+the check:
 
 ```groovy
 javaModule.allowModuleNamingViolations = true

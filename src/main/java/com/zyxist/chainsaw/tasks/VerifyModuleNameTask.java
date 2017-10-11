@@ -20,6 +20,8 @@ import com.zyxist.chainsaw.algorithms.ModuleNameChecker;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
@@ -27,6 +29,8 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.File;
 
 public class VerifyModuleNameTask extends DefaultTask {
+	private static final Logger LOGGER = Logging.getLogger(VerifyModuleNameTask.class);
+
 	private static final String ERROR_TEMPLATE = "The module name '%s' does not follow the official " +
 		"module naming convention for Java (reverse-DNS style, derived from the root package).";
 
@@ -37,9 +41,16 @@ public class VerifyModuleNameTask extends DefaultTask {
 		JavaModule javaModule = project.getExtensions().getByType(JavaModule.class);
 
 		for (File srcDir: mainSourceSet.getAllJava().getSourceDirectories()) {
-			ModuleNameChecker checker = new ModuleNameChecker(srcDir.getAbsolutePath());
+			checkSourceSet(srcDir, javaModule);
+		}
+	}
 
-			if (!checker.verifyModuleName(javaModule.getName())) {
+	private void checkSourceSet(File srcDir, JavaModule javaModule)  {
+		ModuleNameChecker checker = new ModuleNameChecker(srcDir.getAbsolutePath());
+		if (!checker.verifyModuleName(javaModule.getName())) {
+			if (javaModule.isAllowModuleNamingViolations()) {
+				LOGGER.lifecycle(String.format(ERROR_TEMPLATE, javaModule.getName()));
+			} else {
 				throw new GradleException(String.format(ERROR_TEMPLATE, javaModule.getName()));
 			}
 		}
