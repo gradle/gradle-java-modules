@@ -77,7 +77,7 @@ dependencies {
     patch 'com.google.code.findbugs:jsr305:1.3.9'
     
     compile 'javax.annotation:jsr250-api:1.0'
-    compile 'com.google.guava:guava:23.1-jre'
+    compile 'com.google.guava:guava:23.2-jre'
 }
 ```
 
@@ -86,7 +86,7 @@ The module descriptor would look like this:
 ```java
 module com.example.application {
     requires jsr250.api; // warning: this module name is generated and it is not safe to rely on it!
-    requires guava; // warning: this module name is generated and it is not safe to rely on it!
+    requires com.google.common;
 }
 ```
 
