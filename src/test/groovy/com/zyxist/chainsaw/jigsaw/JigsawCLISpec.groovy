@@ -57,6 +57,20 @@ class JigsawCLISpec extends Specification {
 		result == '--module-path /foo/bar/joe --module-version 1.2.3'
 	}
 
+	def "should generate --add-modules"() {
+		given:
+		def cli = new JigsawCLI('/foo/bar/joe');
+		cli.addModules()
+			.add('com.example.foo')
+			.add('com.example.bar')
+
+		when:
+		def result = cli.toString()
+
+		then:
+		result == '--module-path /foo/bar/joe --add-modules com.example.foo,com.example.bar'
+	}
+
 	def "should generate --add-exports"() {
 		given:
 		def cli = new JigsawCLI('/foo/bar/joe')

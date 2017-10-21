@@ -25,9 +25,10 @@ public class JigsawCLI {
 	private final String modulePath;
 	private ModuleFlag moduleFlag = new ModuleFlag();
 	private ModuleVersionFlag moduleVersion = new ModuleVersionFlag();
-	private PatchListFlag patchList = new PatchListFlag();
-	private ExportListFlag exportList = new ExportListFlag();
-	private ReadListFlag readList = new ReadListFlag();
+	private final AddModuleFlag addModuleFlag = new AddModuleFlag();
+	private final PatchListFlag patchList = new PatchListFlag();
+	private final ExportListFlag exportList = new ExportListFlag();
+	private final ReadListFlag readList = new ReadListFlag();
 
 	public JigsawCLI(String modulePath) {
 		this.modulePath = modulePath;
@@ -41,6 +42,10 @@ public class JigsawCLI {
 	public JigsawCLI version(String version) {
 		this.moduleVersion = new ModuleVersionFlag(version);
 		return this;
+	}
+
+	public AddModuleFlag addModules() {
+		return this.addModuleFlag;
 	}
 
 	public PatchListFlag patchList() {
@@ -59,6 +64,7 @@ public class JigsawCLI {
 		generateModulePath(args);
 		moduleFlag.toArgs(args);
 		moduleVersion.toArgs(args);
+		addModuleFlag.toArgs(args);
 		exportList.toArgs(args);
 		readList.toArgs(args);
 		patchList.toArgs(args);

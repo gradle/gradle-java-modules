@@ -21,5 +21,6 @@ public final class JigsawFlags {
 	public static final String MODULE_VERSION = "--module-version";
 	public static final String ADD_EXPORTS = "--add-exports";
 	public static final String ADD_READS = "--add-reads";
+	public static final String ADD_MODULES = "--add-modules";
 	public static final String PATCH_MODULE = "--patch-module";
 }
