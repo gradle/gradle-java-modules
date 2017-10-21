@@ -20,7 +20,7 @@ public class Dependencies {
 	public static final String JUNIT5_PLUGIN_DEPENDENCY = "org.junit.platform:junit-platform-gradle-plugin:1.0.0";
 	public static final String JUNIT5_API_DEPENDENCY = "org.junit.jupiter:junit-jupiter-api:5.0.0";
 	public static final String JUNIT5_ENGINE_DEPENDENCY = "org.junit.jupiter:junit-jupiter-engine:5.0.0";
-	public static final String MOCKITO_DEPENDENCY = "org.mockito:mockito-core:2.10.0";
+	public static final String MOCKITO_DEPENDENCY = "org.mockito:mockito-core:2.11.0";
 	public static final String GUAVA_DEPENDENCY = "com.google.guava:guava:23.2-jre";
 	public static final String DAGGER_DEPENDENCY = "com.google.dagger:dagger:2.11";
 	public static final String DAGGER_COMPILER_DEPENDENCY = "com.google.dagger:dagger-compiler:2.11";
@@ -34,7 +34,7 @@ public class Dependencies {
 	public static final String DAGGER_MODULE = "dagger";
 	public static final String GUAVA_MODULE = "com.google.common";
 	public static final String JSR250_MODULE = "jsr250.api";
-	public static final String MOCKITO_MODULE = "mockito.core";
+	public static final String MOCKITO_MODULE = "org.mockito";
 
 	public static final String JUNIT5_PLUGIN_NAME = "org.junit.platform.gradle.plugin";
 }
