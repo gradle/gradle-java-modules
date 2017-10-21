@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zyxist.chainsaw
+package com.zyxist.chainsaw.integration
 
 import com.zyxist.chainsaw.builder.Dependencies
 import com.zyxist.chainsaw.builder.JigsawProjectBuilder
@@ -23,15 +23,15 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4TestWithMocks
+import static com.zyxist.chainsaw.builder.factory.JUnit5SampleTestFactory.junit5TestWithMocks
 import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class JUnit4TestSpec extends Specification {
+class JUnit5TestSpec extends Specification {
 	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
+
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
-
 	JigsawProjectBuilder project
 
 	def setup() {
@@ -39,15 +39,17 @@ class JUnit4TestSpec extends Specification {
 		project.moduleName("com.example")
 			.packageName("com.example")
 			.exportedPackage("com.example")
-			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
+			.applyPlugin(Dependencies.JUNIT5_PLUGIN_DEPENDENCY, Dependencies.JUNIT5_PLUGIN_NAME)
+			.testCompileDependency(Dependencies.JUNIT5_API_DEPENDENCY)
 			.testCompileDependency(Dependencies.MOCKITO_DEPENDENCY)
+			.testRuntimeDependency(Dependencies.JUNIT5_ENGINE_DEPENDENCY)
 			.extraTestModule(Dependencies.MOCKITO_MODULE)
 			.createJavaFile(regularJavaClass("AClass"))
-			.createJavaTestFile(junit4TestWithMocks())
+			.createJavaTestFile(junit5TestWithMocks())
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
-	def "run JUnit4 tests with Mockito - java plugin way"() {
+	def "run JUnit5 tests with Mockito - java plugin way"() {
 		given:
 		project
 			.gradleJavaPlugin("java")
@@ -56,16 +58,17 @@ class JUnit4TestSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
+				.withProjectDir(tmpDir.root)
+				.forwardOutput()
 				.withArguments("check")
 				.withPluginClasspath().build()
 
 		then:
-		result.task(":test").outcome == SUCCESS
+		result.task(":junitPlatformTest").outcome == SUCCESS
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
-	def "run JUnit4 tests with Mockito - new way"() {
+	def "run JUnit5 tests with Mockito - new way"() {
 		given:
 		project
 			.gradleJavaPlugin("application")
@@ -75,10 +78,11 @@ class JUnit4TestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 				.withProjectDir(tmpDir.root)
+				.forwardOutput()
 				.withArguments("check")
 				.withPluginClasspath().build()
 
 		then:
-		result.task(":test").outcome == SUCCESS
+		result.task(":junitPlatformTest").outcome == SUCCESS
 	}
 }

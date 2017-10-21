@@ -18,6 +18,7 @@ package com.zyxist.chainsaw.jigsaw.cli;
 import com.zyxist.chainsaw.jigsaw.JigsawFlags;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,11 @@ public class ReadItem implements ArgProducer {
 
 	public ReadItem to(String module) {
 		this.dstModules.add(module);
+		return this;
+	}
+
+	public ReadItem toAll(Collection<String> modules) {
+		this.dstModules.addAll(modules);
 		return this;
 	}
 

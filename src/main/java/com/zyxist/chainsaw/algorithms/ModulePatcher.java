@@ -15,6 +15,8 @@
  */
 package com.zyxist.chainsaw.algorithms;
 
+import com.zyxist.chainsaw.jigsaw.cli.PatchItem;
+import com.zyxist.chainsaw.jigsaw.cli.PatchListFlag;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ResolvedArtifact;
@@ -22,10 +24,7 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Generates the '--patch-module' flag configuration from dependencies, and
@@ -39,18 +38,18 @@ public class ModulePatcher {
 		this.patches = patches;
 	}
 
-	public List<String> patchFrom(Project project, String ... dependencySets) {
-		List<String> patchCommands = new ArrayList<>();
+	public Map<String, PatchItem> patchFrom(Project project, String ... dependencySets) {
+		Map<String, PatchItem> patchList = new LinkedHashMap<>();
 		for (String depSet: dependencySets) {
 			Configuration cfg = project.getConfigurations().findByName(depSet);
 			if (null != cfg && cfg.isCanBeResolved()) {
-				scanDependencySet(patchCommands, cfg.getResolvedConfiguration().getResolvedArtifacts());
+				scanDependencySet(patchList, cfg.getResolvedConfiguration().getResolvedArtifacts());
 			}
 		}
-		return patchCommands;
+		return patchList;
 	}
 
-	private void scanDependencySet(List<String> patchCommands, Set<ResolvedArtifact> resolvedArtifacts) {
+	private void scanDependencySet(Map<String, PatchItem> patchCommands, Set<ResolvedArtifact> resolvedArtifacts) {
 		for (ResolvedArtifact artifact : resolvedArtifacts) {
 			for (Map.Entry<String, String> patched : patches.entrySet()) {
 				LOGGER.info("'"+patched.getKey()+"' vs '" + toGenericName(artifact)+"'");
@@ -58,13 +57,24 @@ public class ModulePatcher {
 					if (LOGGER.isEnabled(LogLevel.INFO)) {
 						LOGGER.info("Module '" + patched.getValue() + "' will be patched with '" + toGenericName(artifact) + "'");
 					}
-					patchCommands.add(patched.getValue() + "=" + artifact.getFile().getAbsolutePath());
+					toList(patchCommands, patched.getValue(), artifact.getFile().getAbsolutePath());
 				}
 			}
 		}
 	}
 
+	private void toList(Map<String, PatchItem> patchCommands, String patchedModule, String patchingJar) {
+		PatchItem item = patchCommands.get(patchedModule);
+		if (null == item) {
+			item = new PatchItem(patchedModule);
+			patchCommands.put(patchedModule, item);
+		}
+		item.with(patchingJar);
+	}
+
 	private String toGenericName(ResolvedArtifact artifact) {
 		return artifact.getModuleVersion().getId().getGroup()+":"+artifact.getModuleVersion().getId().getName();
 	}
+
+
 }

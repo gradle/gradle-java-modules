@@ -25,6 +25,11 @@ import static com.zyxist.chainsaw.jigsaw.JigsawFlags.ADD_MODULES;
 public class AddModuleFlag implements ArgProducer {
 	private final List<String> extraModules = new LinkedList<>();
 
+	public AddModuleFlag addAllModulePath() {
+		this.add("ALL-MODULE-PATH");
+		return this;
+	}
+
 	public AddModuleFlag add(String module) {
 		this.extraModules.add(module);
 		return this;

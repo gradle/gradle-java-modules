@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A model of Jigsaw command-line interface, used for generating the necessary
+ * JVM and compiler CLI flags.
+ */
 public class JigsawCLI {
 	private final String modulePath;
 	private ModuleFlag moduleFlag = new ModuleFlag();

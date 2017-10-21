@@ -15,42 +15,34 @@
  */
 package com.zyxist.chainsaw;
 
-import com.zyxist.chainsaw.algorithms.ModulePatcher;
+import com.zyxist.chainsaw.compilation.CompileJavaConfigurator;
+import com.zyxist.chainsaw.exec.CreateStartScriptsConfigurator;
+import com.zyxist.chainsaw.exec.RunTaskConfigurator;
 import com.zyxist.chainsaw.tasks.VerifyModuleNameTask;
 import com.zyxist.chainsaw.tests.*;
-import org.gradle.api.*;
+import org.gradle.api.Action;
+import org.gradle.api.GradleException;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.ApplicationPlugin;
 import org.gradle.api.plugins.AppliedPlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.tasks.JavaExec;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
-import org.gradle.api.tasks.compile.JavaCompile;
-import org.gradle.api.tasks.testing.Test;
-import org.gradle.jvm.application.tasks.CreateStartScripts;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ChainsawPlugin implements Plugin<Project> {
 	private static final Logger LOGGER = Logging.getLogger(ChainsawPlugin.class);
 
 	private static final String APPLICATION_PLUGIN = "application";
 
-	private static final String PATCH_CONFIGURATION_NAME = "patch";
+	public static final String PATCH_CONFIGURATION_NAME = "patch";
 
 	private static final String EXTENSION_NAME = "javaModule";
 
 	private static final String VERIFY_MODULE_NAME_TASK_NAME = "verifyModuleName";
-
-	private static final String LIBS_PLACEHOLDER = "APP_HOME_LIBS_PLACEHOLDER";
 
 	private static final TestEngine[] TEST_ENGINES = {
 		new JUnit4(),
@@ -99,118 +91,25 @@ public class ChainsawPlugin implements Plugin<Project> {
 		project.afterEvaluate(new Action<Project>() {
 			@Override
 			public void execute(final Project project) {
-				TestEngineConfigurator selectedTestEngine = new TestEngineConfigurator(selectTestEngine(project));
+				final JavaModule moduleConfig = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
 
-				configureCompileJavaTask(project);
-				configureCompileTestJavaTask(project, selectedTestEngine);
-				configureTestTask(project, selectedTestEngine);
+				TestEngine testEngine = selectTestEngine(project);
+				final TaskConfigurationOrchestrator orchestrator = new TaskConfigurationOrchestrator();
+				orchestrator
+					.use(ConfigurableTask.JAVA_COMPILE, new CompileJavaConfigurator(moduleConfig))
+					.use(ConfigurableTask.JAVA_TEST_COMPILE, new CompileTestJavaConfigurator(moduleConfig, testEngine))
+					.use(ConfigurableTask.TEST, new TestTaskConfigurator(moduleConfig, testEngine))
+					.use(ConfigurableTask.RUN, new RunTaskConfigurator(moduleConfig))
+					.use(ConfigurableTask.START_SCRIPTS, new CreateStartScriptsConfigurator(moduleConfig))
+					.configureTasks(project, "java");
+
 				project.getPluginManager().withPlugin(APPLICATION_PLUGIN, new Action<AppliedPlugin>() {
 					@Override
 					public void execute(AppliedPlugin appliedPlugin) {
-						configureRunTask(project);
-						configureStartScriptsTask(project);
+						orchestrator.configureTasks(project, "application");
 					}
 				});
 			}
 		});
-	}
-
-	private void configureCompileJavaTask(final Project project) {
-		final JavaCompile compileJava = (JavaCompile) project.getTasks().findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
-		compileJava.doFirst(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-
-				List<String> args = new ArrayList<>();
-				args.add("--module-path");
-				args.add(compileJava.getClasspath().getAsPath());
-
-				ModulePatcher patcher = new ModulePatcher(module.getPatchModules());
-				List<String> patches = patcher.patchFrom(project, PATCH_CONFIGURATION_NAME);
-				if (!patches.isEmpty()) {
-					args.add("--patch-module");
-					args.add(String.join(",", patches));
-				}
-
-				compileJava.getOptions().setCompilerArgs(args);
-				compileJava.setClasspath(project.files());
-			}
-		});
-	}
-
-	private void configureCompileTestJavaTask(final Project project, final TestEngineConfigurator selectedTestEngine) {
-		final JavaCompile compileTestJava = (JavaCompile) project.getTasks()
-			.findByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME);
-		final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-		final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-		compileTestJava.getInputs().property("moduleName", module.getName());
-		compileTestJava.doFirst(selectedTestEngine.createCompileTestJavaAction(project, test, compileTestJava, module));
-	}
-
-	private void configureTestTask(final Project project, final TestEngineConfigurator selectedTestEngine) {
-		final Test testTask = (Test) project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
-		final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-		final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-		testTask.getInputs().property("moduleName", module.getName());
-		testTask.doFirst(selectedTestEngine.createTestJavaAction(project, test, testTask, module));
-	}
-
-	private void configureRunTask(final Project project) {
-		final JavaExec run = (JavaExec) project.getTasks().findByName(ApplicationPlugin.TASK_RUN_NAME);
-		final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-		run.getInputs().property("moduleName", module.getName());
-		run.doFirst(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				List<String> args = new ArrayList<>();
-				args.add("--module-path");
-				args.add(run.getClasspath().getAsPath());
-				args.add("--module");
-				args.add(module.getName() + "/" + run.getMain());
-				run.setJvmArgs(args);
-				run.setClasspath(project.files());
-			}
-		});
-	}
-
-	private void configureStartScriptsTask(final Project project) {
-		final CreateStartScripts startScripts = (CreateStartScripts) project.getTasks()
-			.findByName(ApplicationPlugin.TASK_START_SCRIPTS_NAME);
-		final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
-		startScripts.getInputs().property("moduleName", module.getName());
-		startScripts.doFirst(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				startScripts.setClasspath(project.files());
-				List<String> args = new ArrayList<>();
-				args.add("--module-path");
-				args.add(LIBS_PLACEHOLDER);
-				args.add("--module");
-				args.add(module.getName() + "/" + startScripts.getMainClassName());
-				startScripts.setDefaultJvmOpts(args);
-			}
-		});
-		startScripts.doLast(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
-				replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
-				File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
-				replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\lib");
-			}
-		});
-	}
-
-	private void replaceLibsPlaceHolder(Path path, String newText) {
-		try {
-			List<String> bashContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
-			for (int i = 0; i < bashContent.size(); i++) {
-				bashContent.set(i, bashContent.get(i).replaceFirst(LIBS_PLACEHOLDER, newText));
-			}
-			Files.write(path, bashContent, StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			throw new GradleException("Couldn't replace placeholder in " + path);
-		}
 	}
 }
