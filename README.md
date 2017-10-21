@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/zyxist/chainsaw.svg?branch=master)](https://travis-ci.org/zyxist/chainsaw)
+[![Codecov](https://img.shields.io/codecov/c/github/zyxist/chainsaw.svg)]()
 [![GitHub release](https://img.shields.io/github/release/zyxist/chainsaw.svg)]()
 
 # Chainsaw

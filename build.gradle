@@ -1,6 +1,7 @@
 plugins {
 	id 'groovy'
 	id 'idea'
+	id 'jacoco'
 	id 'maven-publish'
 	id 'java-gradle-plugin'
 	id 'com.gradle.plugin-publish' version '0.9.7'
@@ -24,6 +25,15 @@ dependencies {
 		exclude module: 'groovy-all'
 	}
 }
+
+jacocoTestReport {
+	reports {
+		xml.enabled = true
+		html.enabled = true
+	}
+}
+
+check.dependsOn jacocoTestReport
 
 test {
 	testLogging.showStandardStreams = true

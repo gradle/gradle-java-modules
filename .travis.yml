@@ -3,4 +3,8 @@ jdk:
   - oraclejdk9
 
 install: echo "skip 'gradle assemble' step"
-script: ./gradlew clean build --stacktrace
+script:
+  - ./gradlew clean build --stacktrace
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
