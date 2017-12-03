@@ -41,6 +41,7 @@ repositories {
 }
 
 dependencies {
+  compile 'com.google.guava:guava:23.5-jre'
   testImplementation 'junit:junit:4.12'
 }
 
@@ -57,19 +58,27 @@ rootProject.name = "modular"
         def moduleDescriptor = tmpDir.newFile("src/main/java/module-info.java")
         moduleDescriptor << """
 module test.module {
+  requires com.google.common;
   exports io.example;
 }
 """
         def sourceFile = tmpDir.newFile("src/main/java/io/example/AClass.java")
         sourceFile << """
 package io.example;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+
 public class AClass {
   public void aMethod(String aString) {
     System.out.println(aString);
   }
   
   public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
+    ImmutableList<String> myList = ImmutableList.of("Hello", "World!");
+    String greeting = Joiner.on(" ").join(myList);
+    
+    new AClass().aMethod(greeting);
   }
 }
 """
@@ -94,6 +103,22 @@ public class AClassTest {
   }
 }
 """
+    }
+
+    @IgnoreIf({NOT_JAVA_9})
+    def "can generate a module javadoc"() {
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(tmpDir.root)
+                .withArguments("javadoc")
+                .withPluginClasspath().build()
+
+        then:
+        result.task(":compileJava").outcome == SUCCESS
+        result.task(":javadoc").outcome == SUCCESS
+        new File(tmpDir.root, "build/classes/java/main/module-info.class").exists()
+        new File(tmpDir.root, "build/classes/java/main/io/example/AClass.class").exists()
+        new File(tmpDir.root, "build/docs/javadoc/io/example/AClass.html").exists()
     }
 
     @IgnoreIf({NOT_JAVA_9})
