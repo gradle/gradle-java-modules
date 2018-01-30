@@ -103,9 +103,11 @@ public class JigsawPlugin implements Plugin<Project> {
                 args.add("--module-path");
                 args.add(compileTestJava.getClasspath().getAsPath());
                 args.add("--add-modules");
-                args.add("junit");
+                args.add("org.junit.jupiter.api");
+                args.add("--add-modules");
+                args.add("java.xml.bind")
                 args.add("--add-reads");
-                args.add(module.geName() + "=junit");
+                args.add(module.geName() + "=org.junit.jupiter.api");
                 args.add("--patch-module");
                 args.add(module.geName() + "=" + test.getJava().getSourceDirectories().getAsPath());
                 compileTestJava.getOptions().setCompilerArgs(args);
@@ -128,7 +130,7 @@ public class JigsawPlugin implements Plugin<Project> {
                 args.add("--add-modules");
                 args.add("ALL-MODULE-PATH");
                 args.add("--add-reads");
-                args.add(module.geName() + "=junit");
+                args.add(module.geName() + "=org.junit.jupiter.api");
                 args.add("--patch-module");
                 args.add(module.geName() + "=" + test.getJava().getOutputDir());
                 testTask.setJvmArgs(args);
