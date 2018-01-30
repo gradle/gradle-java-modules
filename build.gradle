@@ -30,7 +30,7 @@ dependencies {
 gradlePlugin {
     plugins {
         experimentalJigsawPlugin {
-            id = "org.gradle.java.experimental-jigsaw"
+            id = "org.gradle.java.experimental-jigsaw-junit5"
             implementationClass = "org.gradle.java.JigsawPlugin"
         }
     }
@@ -41,10 +41,10 @@ pluginBundle {
     vcsUrl = 'https://github.com/gradle/gradle-java-modules'
     plugins {
         experimentalJigsawPlugin {
-            id = 'org.gradle.java.experimental-jigsaw'
-            displayName = 'Experimental Jigsaw Plugin'
+            id = 'org.gradle.java.experimental-jigsaw-junit5'
+            displayName = 'Experimental Jigsaw Plugin with Junit5'
             description = 'Experiment with Java 9 modules before they are officially supported.'
-            tags = ['jigsaw', 'modules', 'java9']
+            tags = ['jigsaw', 'modules', 'java9', 'junit5']
             version = project.version
         }
     }
