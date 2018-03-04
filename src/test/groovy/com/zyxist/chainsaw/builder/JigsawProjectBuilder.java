@@ -265,7 +265,7 @@ public class JigsawProjectBuilder {
 		if (useApt) {
 			build.append("	id 'net.ltgt.apt' version '"+Dependencies.APT_PLUGIN_VERSION+"'\n");
 		}
-		build.append("	id 'com.zyxist.chainsaw' version '"+PLUGIN_VERSION+"'\n");
+		build.append("	id 'com.zyxist.chainsaw'\n");
 		build.append("}\n");
 	}
 

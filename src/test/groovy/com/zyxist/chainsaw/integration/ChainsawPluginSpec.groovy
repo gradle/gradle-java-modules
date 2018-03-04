@@ -83,9 +83,11 @@ class ChainsawPluginSpec extends Specification {
 	def "can run with a module"() {
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
-				.withArguments("run")
-				.withPluginClasspath().build()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("run")
+			.withPluginClasspath().build()
 
 		then:
 		result.output.contains("Hello World!")

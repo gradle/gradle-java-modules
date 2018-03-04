@@ -68,6 +68,7 @@ class AnnotationProcessingTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("--stacktrace", "assemble")
 			.withPluginClasspath().build()
@@ -92,6 +93,7 @@ class AnnotationProcessingTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("--stacktrace", "run")
 			.withPluginClasspath()

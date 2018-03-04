@@ -58,10 +58,11 @@ class JUnit5TestSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
-				.forwardOutput()
-				.withArguments("check")
-				.withPluginClasspath().build()
+			.withProjectDir(tmpDir.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
 
 		then:
 		result.task(":junitPlatformTest").outcome == SUCCESS
@@ -77,10 +78,11 @@ class JUnit5TestSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(tmpDir.root)
-				.forwardOutput()
-				.withArguments("check")
-				.withPluginClasspath().build()
+			.withProjectDir(tmpDir.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
 
 		then:
 		result.task(":junitPlatformTest").outcome == SUCCESS

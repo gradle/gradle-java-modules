@@ -60,7 +60,8 @@ dependencies {
 
 ## Javadocs
 
-Since version 0.2.0, the `javadoc` task is automatically recognized and configured to support modules.
+Since version 0.2.0, the `javadoc` task is automatically recognized and configured to support modules. It also works
+with Nebula Javadoc plugin.
 
 ## Patching
 

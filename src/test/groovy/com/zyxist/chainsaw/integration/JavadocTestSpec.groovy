@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,35 @@
  */
 package com.zyxist.chainsaw.integration
 
-import com.zyxist.chainsaw.builder.Dependencies
 import com.zyxist.chainsaw.builder.JigsawProjectBuilder
+import com.zyxist.chainsaw.jigsaw.JigsawFlags
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4TestWithMocks
-import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
+import static com.zyxist.chainsaw.builder.factory.DocumentedJavaClassFactory.documentedJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class JUnit4TestSpec extends Specification {
-	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
+class JavadocTestSpec extends Specification {
 	@Rule
 	final TemporaryFolder tmpDir = new TemporaryFolder()
+	static final NOT_JAVA_9 = !System.getProperty("java.version").startsWith("9")
 
 	JigsawProjectBuilder project
 
 	def setup() {
 		project = new JigsawProjectBuilder(tmpDir)
-		project.moduleName("com.example")
+		project
+			.moduleName("com.example")
 			.packageName("com.example")
 			.exportedPackage("com.example")
-			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
-			.testCompileDependency(Dependencies.MOCKITO_DEPENDENCY)
-			.extraTestModule(Dependencies.MOCKITO_MODULE)
-			.createJavaFile(regularJavaClass("AClass"))
-			.createJavaTestFile(junit4TestWithMocks())
+			.createJavaFile(documentedJavaClass())
 	}
 
-	@IgnoreIf({NOT_JAVA_9})
-	def "run JUnit4 tests with Mockito - java plugin way"() {
+	@IgnoreIf({ NOT_JAVA_9 })
+	def "it is possible to generate javadocs for modular project"() {
 		given:
 		project
 			.gradleJavaPlugin("java")
@@ -59,30 +55,13 @@ class JUnit4TestSpec extends Specification {
 			.withProjectDir(project.root)
 			.withDebug(true)
 			.forwardOutput()
-			.withArguments("check")
+			.withArguments("javadoc")
 			.withPluginClasspath().build()
 
 		then:
-		result.task(":test").outcome == SUCCESS
-	}
-
-	@IgnoreIf({NOT_JAVA_9})
-	def "run JUnit4 tests with Mockito - new way"() {
-		given:
-		project
-			.gradleJavaPlugin("application")
-			.createGradleBuild()
-			.createModuleDescriptor()
-
-		when:
-		def result = GradleRunner.create()
-			.withProjectDir(tmpDir.root)
-			.withDebug(true)
-			.forwardOutput()
-			.withArguments("check")
-			.withPluginClasspath().build()
-
-		then:
-		result.task(":test").outcome == SUCCESS
+		result.task(":javadoc").outcome == SUCCESS
+		new File(tmpDir.root, "build/tmp/javadoc/javadoc.options").exists()
+		new File(tmpDir.root, "build/docs/javadoc/com/example/DocumentedClass.html").exists()
+		new File(tmpDir.root, "build/tmp/javadoc/javadoc.options").text.contains(JigsawFlags.JAVADOC_MODULE_PATH)
 	}
 }

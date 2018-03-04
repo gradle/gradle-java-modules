@@ -61,6 +61,7 @@ class ModulePatchTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("assemble")
 			.withPluginClasspath().build()
@@ -84,6 +85,7 @@ class ModulePatchTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("assemble")
 			.withPluginClasspath().build()
@@ -109,6 +111,7 @@ class ModulePatchTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("assemble")
 			.withPluginClasspath().build()
@@ -137,6 +140,7 @@ class ModulePatchTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("check")
 			.withPluginClasspath().build()
@@ -158,6 +162,7 @@ class ModulePatchTestSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
 			.forwardOutput()
 			.withArguments("run")
 			.withPluginClasspath()

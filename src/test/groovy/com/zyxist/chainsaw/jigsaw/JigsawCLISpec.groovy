@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,5 +111,16 @@ class JigsawCLISpec extends Specification {
 
 		then:
 		result == '--module-path /foo/bar/joe --patch-module some.module=/path/to/some.jar'
+	}
+
+	def "should return the provided module path"() {
+		given:
+		def cli = new JigsawCLI("/foo/bar/joe")
+
+		when:
+		def result = cli.getModulePath()
+
+		then:
+		result == '/foo/bar/joe'
 	}
 }
