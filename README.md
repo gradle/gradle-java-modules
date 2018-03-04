@@ -58,6 +58,10 @@ dependencies {
 }
 ```
 
+## Javadocs
+
+Since version 0.2.0, the `javadoc` task is automatically recognized and configured to support modules.
+
 ## Patching
 
 Some commonly used dependencies violate the *no package split* rule. For example, `javax.validation` package can be
