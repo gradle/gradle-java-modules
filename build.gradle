@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'com.zyxist'
-version = '0.1.3'
+version = '0.2.0'
 
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
