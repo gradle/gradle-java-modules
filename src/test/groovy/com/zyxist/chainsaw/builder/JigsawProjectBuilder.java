@@ -252,7 +252,7 @@ public class JigsawProjectBuilder {
 		build.append("plugins {\n");
 		build.append("	id '"+javaPlugin+"'\n");
 		if (useApt) {
-			build.append("	id 'net.ltgt.apt' version '0.12'\n");
+			build.append("	id 'net.ltgt.apt' version '0.15'\n");
 		}
 		build.append("	id 'com.zyxist.chainsaw' version '0.1.3'\n");
 		build.append("}\n");
