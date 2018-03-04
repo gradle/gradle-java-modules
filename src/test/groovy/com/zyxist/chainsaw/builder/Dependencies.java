@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,4 +37,6 @@ public class Dependencies {
 	public static final String MOCKITO_MODULE = "org.mockito";
 
 	public static final String JUNIT5_PLUGIN_NAME = "org.junit.platform.gradle.plugin";
+
+	public static final String APT_PLUGIN_VERSION = "0.15";
 }

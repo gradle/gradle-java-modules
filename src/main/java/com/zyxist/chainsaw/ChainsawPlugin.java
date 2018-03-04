@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.zyxist.chainsaw;
 
 import com.zyxist.chainsaw.compilation.CompileJavaConfigurator;
+import com.zyxist.chainsaw.compilation.GenerateJavadocConfigurator;
 import com.zyxist.chainsaw.exec.CreateStartScriptsConfigurator;
 import com.zyxist.chainsaw.exec.RunTaskConfigurator;
 import com.zyxist.chainsaw.tasks.VerifyModuleNameTask;
@@ -98,6 +99,7 @@ public class ChainsawPlugin implements Plugin<Project> {
 				orchestrator
 					.use(ConfigurableTask.JAVA_COMPILE, new CompileJavaConfigurator(moduleConfig))
 					.use(ConfigurableTask.JAVA_TEST_COMPILE, new CompileTestJavaConfigurator(moduleConfig, testEngine))
+					.use(ConfigurableTask.JAVADOC, new GenerateJavadocConfigurator(moduleConfig))
 					.use(ConfigurableTask.TEST, new TestTaskConfigurator(moduleConfig, testEngine))
 					.use(ConfigurableTask.RUN, new RunTaskConfigurator(moduleConfig))
 					.use(ConfigurableTask.START_SCRIPTS, new CreateStartScriptsConfigurator(moduleConfig))

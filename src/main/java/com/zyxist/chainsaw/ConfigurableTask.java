@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.Exec;
 import org.gradle.api.tasks.application.CreateStartScripts;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.api.tasks.testing.Test;
 
 public enum ConfigurableTask {
 	JAVA_COMPILE("java", JavaCompile.class, JavaPlugin.COMPILE_JAVA_TASK_NAME),
 	JAVA_TEST_COMPILE("java", JavaCompile.class, JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME),
+	JAVADOC("java", Javadoc.class, JavaPlugin.JAVADOC_TASK_NAME),
 	TEST("java", Test.class, JavaPlugin.TEST_TASK_NAME),
 	RUN("application", Exec.class, ApplicationPlugin.TASK_RUN_NAME),
 	START_SCRIPTS("application", CreateStartScripts.class, ApplicationPlugin.TASK_START_SCRIPTS_NAME);

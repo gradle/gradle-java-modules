@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JigsawProjectBuilder {
+	private static final String PLUGIN_VERSION = "0.2.0";
+
 	private static final String DEFAULT_PKG_NAME = "com.example";
 	private static final String DEFAULT_MODULE_NAME = "com.example";
 
@@ -35,6 +37,7 @@ public class JigsawProjectBuilder {
 	private String moduleName = DEFAULT_MODULE_NAME;
 	private String mainClassName = null;
 	private boolean useApt = false;
+	private boolean useJavadoc = false;
 	private boolean allowNameViolations = false;
 
 	private final List<String> applyPluginClasspath = new ArrayList<>();
@@ -92,6 +95,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder useAnnotationProcessor() {
 		this.useApt = true;
+		return this;
+	}
+
+	public JigsawProjectBuilder useJavadoc() {
+		this.useJavadoc = true;
 		return this;
 	}
 
@@ -200,6 +208,9 @@ public class JigsawProjectBuilder {
 		generateDependencies(build);
 		generateApplicationConfig(build);
 		generateJavaModuleConfig(build);
+		if (useJavadoc) {
+			generateJavadocConfig(build);
+		}
 
 		File file = tmpDir.newFile("build.gradle");
 		ResourceGroovyMethods.leftShift(file, build.toString());
@@ -252,9 +263,9 @@ public class JigsawProjectBuilder {
 		build.append("plugins {\n");
 		build.append("	id '"+javaPlugin+"'\n");
 		if (useApt) {
-			build.append("	id 'net.ltgt.apt' version '0.15'\n");
+			build.append("	id 'net.ltgt.apt' version '"+Dependencies.APT_PLUGIN_VERSION+"'\n");
 		}
-		build.append("	id 'com.zyxist.chainsaw' version '0.1.3'\n");
+		build.append("	id 'com.zyxist.chainsaw' version '"+PLUGIN_VERSION+"'\n");
 		build.append("}\n");
 	}
 
@@ -266,6 +277,12 @@ public class JigsawProjectBuilder {
 		build.append("		}\n");
 		build.append("	}\n");
 		build.append("}\n\n");
+	}
+
+	private void generateJavadocConfig(StringBuilder build) {
+		build.append("javadoc {");
+		build.append("	source = sourceSets.main.allJava");
+		build.append("}");
 	}
 
 	private void generateBuildscript(StringBuilder build) {
