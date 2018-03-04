@@ -19,10 +19,16 @@ import com.zyxist.chainsaw.JavaModule;
 import com.zyxist.chainsaw.TaskConfigurator;
 import com.zyxist.chainsaw.algorithms.ModulePatcher;
 import com.zyxist.chainsaw.jigsaw.JigsawCLI;
+import com.zyxist.chainsaw.jigsaw.cli.PatchItem;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.JavaExec;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+
+import java.io.File;
+import java.util.Optional;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
 
@@ -39,10 +45,16 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 	}
 
 	@Override
-	public Action<Task> doFirst(final Project project, final JavaExec run) {
-		return new Action<Task>() {
+	public Action<Task> doFirst(Project project, JavaExec task) {
+		return (nothing) -> {};
+	}
+
+	@Override
+	public Optional<Action<Task>> doLast(final Project project, final JavaExec run) {
+		return Optional.of(new Action<Task>() {
 			@Override
 			public void execute(Task task) {
+				final SourceSet mainSourceSet = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
 				JigsawCLI cli = new JigsawCLI(run.getClasspath().getAsPath());
 				cli.module(moduleConfig.getName(), run.getMain());
 
@@ -54,6 +66,6 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 				run.setJvmArgs(cli.generateArgs());
 				run.setClasspath(project.files());
 			}
-		};
+		});
 	}
 }

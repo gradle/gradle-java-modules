@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import spock.lang.Specification
 
 import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4Test
 import static com.zyxist.chainsaw.builder.factory.RunnableJavaClassFactory.runnableJavaClass
+import static com.zyxist.chainsaw.builder.factory.RunnableResourceClassFactory.runnableResourceClasspathClass
+import static com.zyxist.chainsaw.builder.factory.RunnableResourceClassFactory.runnableResourceModularClass
+import static com.zyxist.chainsaw.builder.factory.SampleTextResourceFactory.samplePackagedTextResource
+import static com.zyxist.chainsaw.builder.factory.SampleTextResourceFactory.sampleTextResource
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class ChainsawPluginSpec extends Specification {
@@ -42,15 +46,19 @@ class ChainsawPluginSpec extends Specification {
 			.exportedPackage("com.example")
 			.gradleJavaPlugin("application")
 			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
+
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "can assemble a module"() {
+		given:
+		project
 			.mainClass("com.example.AClass")
 			.createJavaFile(runnableJavaClass())
 			.createJavaTestFile(junit4Test())
 			.createModuleDescriptor()
 			.createGradleBuild()
-	}
 
-	@IgnoreIf({NOT_JAVA_9})
-	def "can assemble a module"() {
 		when:
 		def result = GradleRunner.create()
 				.withProjectDir(project.root)
@@ -67,6 +75,14 @@ class ChainsawPluginSpec extends Specification {
 
 	@IgnoreIf({NOT_JAVA_9})
 	def "can check a module"() {
+		given:
+		project
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.createJavaTestFile(junit4Test())
+			.createModuleDescriptor()
+			.createGradleBuild()
+
 		when:
 		def result = GradleRunner.create()
 				.withProjectDir(project.root)
@@ -81,6 +97,14 @@ class ChainsawPluginSpec extends Specification {
 
 	@IgnoreIf({NOT_JAVA_9})
 	def "can run with a module"() {
+		given:
+		project
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.createJavaTestFile(junit4Test())
+			.createModuleDescriptor()
+			.createGradleBuild()
+
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
@@ -91,5 +115,47 @@ class ChainsawPluginSpec extends Specification {
 
 		then:
 		result.output.contains("Hello World!")
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "resources loaded with classloader are visible in runtime"() {
+		project
+			.mainClass("com.example.ResourceClass")
+			.createJavaFile(runnableResourceClasspathClass())
+			.createJavaResourceFile(sampleTextResource())
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("run")
+			.withPluginClasspath().build()
+
+		then:
+		result.output.contains("Hello world")
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "resources loaded with module loader are visible in runtime"() {
+		project
+			.mainClass("com.example.ResourceClass")
+			.createJavaFile(runnableResourceModularClass())
+			.createJavaResourceFile(sampleTextResource())
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("run", "--stacktrace")
+			.withPluginClasspath().build()
+
+		then:
+		result.output.contains("Hello world")
 	}
 }

@@ -30,7 +30,9 @@ public class JigsawProjectBuilder {
 	private static final String DEFAULT_MODULE_NAME = "com.example";
 
 	private static final String JAVA_SRC = "src/main/java";
+	private static final String JAVA_RESOURCES = "src/main/resources";
 	private static final String TEST_SRC = "src/test/java";
+	private static final String TEST_RESOURCES = "src/test/resources";
 
 	private String javaPlugin = "";
 	private String pkgName = DEFAULT_PKG_NAME;
@@ -177,14 +179,25 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder createJavaFile(JavaCodeFactory factory) throws IOException {
 		String path = JAVA_SRC + "/" + factory.getFilename(this);
-		createDirectories(path);
-		File file = tmpDir.newFile(path);
-		ResourceGroovyMethods.leftShift(file, factory.generateCode(this));
-		return this;
+		return createFile(path, factory);
+	}
+
+	public JigsawProjectBuilder createJavaResourceFile(JavaCodeFactory factory) throws IOException {
+		String path = JAVA_RESOURCES + "/" + factory.getFilename(this);
+		return createFile(path, factory);
 	}
 
 	public JigsawProjectBuilder createJavaTestFile(JavaCodeFactory factory) throws IOException {
 		String path = TEST_SRC + "/" + factory.getFilename(this);
+		return createFile(path, factory);
+	}
+
+	public JigsawProjectBuilder createTestResourceFile(JavaCodeFactory factory) throws IOException {
+		String path = TEST_RESOURCES + "/" + factory.getFilename(this);
+		return createFile(path, factory);
+	}
+
+	private JigsawProjectBuilder createFile(String path, JavaCodeFactory factory) throws IOException {
 		createDirectories(path);
 		File file = tmpDir.newFile(path);
 		ResourceGroovyMethods.leftShift(file, factory.generateCode(this));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.JUnit5SampleResourceTestFactory.junit5TestAccessingModularResources
+import static com.zyxist.chainsaw.builder.factory.JUnit5SampleResourceTestFactory.junit5TestAccessingResources
 import static com.zyxist.chainsaw.builder.factory.JUnit5SampleTestFactory.junit5TestWithMocks
 import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
+import static com.zyxist.chainsaw.builder.factory.SampleTextResourceFactory.sampleTextResource
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class JUnit5TestSpec extends Specification {
@@ -45,7 +48,6 @@ class JUnit5TestSpec extends Specification {
 			.testRuntimeDependency(Dependencies.JUNIT5_ENGINE_DEPENDENCY)
 			.extraTestModule(Dependencies.MOCKITO_MODULE)
 			.createJavaFile(regularJavaClass("AClass"))
-			.createJavaTestFile(junit5TestWithMocks())
 	}
 
 	@IgnoreIf({NOT_JAVA_9})
@@ -53,6 +55,7 @@ class JUnit5TestSpec extends Specification {
 		given:
 		project
 			.gradleJavaPlugin("java")
+			.createJavaTestFile(junit5TestWithMocks())
 			.createGradleBuild()
 			.createModuleDescriptor()
 
@@ -73,6 +76,51 @@ class JUnit5TestSpec extends Specification {
 		given:
 		project
 			.gradleJavaPlugin("application")
+			.createJavaTestFile(junit5TestWithMocks())
+			.createGradleBuild()
+			.createModuleDescriptor()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(tmpDir.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":junitPlatformTest").outcome == SUCCESS
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "JUnit5 tests shall see the test resources loaded via classpath"() {
+		given:
+		project
+			.gradleJavaPlugin("java")
+			.createTestResourceFile(sampleTextResource())
+			.createJavaTestFile(junit5TestAccessingResources())
+			.createGradleBuild()
+			.createModuleDescriptor()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(tmpDir.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":junitPlatformTest").outcome == SUCCESS
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "JUnit5 tests shall see the test resources loaded via modular path"() {
+		given:
+		project
+			.gradleJavaPlugin("java")
+			.createTestResourceFile(sampleTextResource())
+			.createJavaTestFile(junit5TestAccessingModularResources())
 			.createGradleBuild()
 			.createModuleDescriptor()
 
