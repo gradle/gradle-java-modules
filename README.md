@@ -12,20 +12,22 @@ Gradle doesn't currently support building Java 9 modules in a first-class way, e
 
 ## Basic usage
 
-If you already have a working Java project, applying the plugin is just two steps:
+If you already have a working Java project, applying the plugin is just one step:
 
- 1. Apply the plugin:
-    ```groovy
-    plugins {
-      id 'com.zyxist.chainsaw' version 'x.y.z'
-    }
-    ```
- 2. Set the module name:
-    ```groovy
-    javaModule.name = '<your-module-name>'
-    ```
+```groovy
+plugins {
+  id 'com.zyxist.chainsaw' version 'x.y.z'
+}
+```
 
-The module name must be identical, as in `module-info.java` descriptor.
+Starting from version 0.2.1, the plugin automatically detects the module name from the sources.
+In earlier versions, the module name had to be set manually in `build.gradle`:
+
+```groovy
+javaModule.name = '<your-module-name>'
+```
+
+The module name had to be identical, as in `module-info.java` descriptor.
 
 ### Naming modules
 

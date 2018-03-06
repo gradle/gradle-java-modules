@@ -56,9 +56,11 @@ class VerifyModuleNameTaskSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
-				.withArguments("verifyModuleName")
-				.withPluginClasspath().build()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("verifyModuleName")
+			.withPluginClasspath().build()
 
 		then:
 		result.task(":verifyModuleName").outcome == SUCCESS
@@ -71,10 +73,12 @@ class VerifyModuleNameTaskSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
-				.withArguments("verifyModuleName")
-				.withPluginClasspath()
-				.buildAndFail()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("verifyModuleName")
+			.withPluginClasspath()
+			.buildAndFail()
 
 		then:
 		result.output.contains("The module name 'test.module' does not follow the official module naming convention for Java (reverse-DNS style, derived from the root package).")
@@ -89,6 +93,8 @@ class VerifyModuleNameTaskSpec extends Specification {
 		when:
 		def result = GradleRunner.create()
 			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
 			.withArguments("verifyModuleName")
 			.withPluginClasspath()
 			.build()

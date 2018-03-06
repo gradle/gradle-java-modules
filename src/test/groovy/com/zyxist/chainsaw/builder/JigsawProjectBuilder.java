@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JigsawProjectBuilder {
-	private static final String PLUGIN_VERSION = "0.2.0";
-
 	private static final String DEFAULT_PKG_NAME = "com.example";
 	private static final String DEFAULT_MODULE_NAME = "com.example";
 
@@ -38,6 +36,7 @@ public class JigsawProjectBuilder {
 	private String pkgName = DEFAULT_PKG_NAME;
 	private String moduleName = DEFAULT_MODULE_NAME;
 	private String mainClassName = null;
+	private boolean useExplicitModuleName = true;
 	private boolean useApt = false;
 	private boolean useJavadoc = false;
 	private boolean allowNameViolations = false;
@@ -102,6 +101,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder useJavadoc() {
 		this.useJavadoc = true;
+		return this;
+	}
+
+	public JigsawProjectBuilder dontUseExplicitModuleName() {
+		this.useExplicitModuleName = false;
 		return this;
 	}
 
@@ -241,7 +245,9 @@ public class JigsawProjectBuilder {
 	}
 
 	private void generateJavaModuleConfig(StringBuilder build) {
-		build.append("javaModule.name = '" + moduleName+"'\n");
+		if (useExplicitModuleName) {
+			build.append("javaModule.name = '" + moduleName+"'\n");
+		}
 		if (allowNameViolations) {
 			build.append("javaModule.allowModuleNamingViolations = true\n");
 		}

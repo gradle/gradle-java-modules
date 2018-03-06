@@ -15,21 +15,23 @@
  */
 package com.zyxist.chainsaw;
 
+import com.zyxist.chainsaw.algorithms.ModuleNameDetector;
 import com.zyxist.chainsaw.compilation.CompileJavaConfigurator;
 import com.zyxist.chainsaw.compilation.GenerateJavadocConfigurator;
 import com.zyxist.chainsaw.exec.CreateStartScriptsConfigurator;
 import com.zyxist.chainsaw.exec.RunTaskConfigurator;
 import com.zyxist.chainsaw.tasks.VerifyModuleNameTask;
 import com.zyxist.chainsaw.tests.*;
-import org.gradle.api.Action;
-import org.gradle.api.GradleException;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
+import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.AppliedPlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.internal.impldep.org.bouncycastle.math.raw.Mod;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,16 +56,19 @@ public class ChainsawPlugin implements Plugin<Project> {
 	@Override
 	public void apply(Project project) {
 		LOGGER.debug("Applying ChainsawPlugin to " + project.getName());
-		project.getPlugins().apply(JavaPlugin.class);
+		JavaPlugin plugin = project.getPlugins().apply(JavaPlugin.class);
 		Configuration cfg = project.getConfigurations().create(PATCH_CONFIGURATION_NAME);
 		cfg.setDescription("Dependencies that break Java Module System rules and need to be added as patches to other modules.");
 
 		project.getExtensions().create(EXTENSION_NAME, JavaModule.class);
+		JavaPluginConvention javaConfig = project.getConvention().getPlugin(JavaPluginConvention.class);
+		ModuleNameDetector detector = new ModuleNameDetector(javaConfig.getSourceCompatibility());
+
 		VerifyModuleNameTask vmnTask = project.getTasks().create(VERIFY_MODULE_NAME_TASK_NAME, VerifyModuleNameTask.class);
 		vmnTask.dependsOn("compileJava");
 
 		removePatchedDependencies(project, cfg);
-		configureJavaTasks(project);
+		configureJavaTasks(project, detector);
 	}
 
 	private void removePatchedDependencies(Project project, Configuration patchConfig) {
@@ -88,30 +93,31 @@ public class ChainsawPlugin implements Plugin<Project> {
 		throw new GradleException("Unknown test engine.");
 	}
 
-	private void configureJavaTasks(final Project project) {
-		project.afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(final Project project) {
-				final JavaModule moduleConfig = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+	private void inferModuleName(Project project, JavaModule moduleConfig, ModuleNameDetector detector) {
+		if (moduleConfig.getName() == null) {
+			final SourceSet mainSourceSet = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
+			moduleConfig.setName(detector.findModuleName(mainSourceSet.getJava().getSrcDirs().iterator().next()));
+			LOGGER.info("Inferred module name: " + moduleConfig.getName());
+		}
+	}
 
-				TestEngine testEngine = selectTestEngine(project);
-				final TaskConfigurationOrchestrator orchestrator = new TaskConfigurationOrchestrator();
-				orchestrator
-					.use(ConfigurableTask.JAVA_COMPILE, new CompileJavaConfigurator(moduleConfig))
-					.use(ConfigurableTask.JAVA_TEST_COMPILE, new CompileTestJavaConfigurator(moduleConfig, testEngine))
-					.use(ConfigurableTask.JAVADOC, new GenerateJavadocConfigurator(moduleConfig))
-					.use(ConfigurableTask.TEST, new TestTaskConfigurator(moduleConfig, testEngine))
-					.use(ConfigurableTask.RUN, new RunTaskConfigurator(moduleConfig))
-					.use(ConfigurableTask.START_SCRIPTS, new CreateStartScriptsConfigurator(moduleConfig))
-					.configureTasks(project, "java");
+	private void configureJavaTasks(final Project project, final ModuleNameDetector detector) {
+		project.afterEvaluate(evaluatedProject -> {
+			final JavaModule moduleConfig = (JavaModule) evaluatedProject.getExtensions().getByName(EXTENSION_NAME);
+			inferModuleName(evaluatedProject, moduleConfig, detector);
+			TestEngine testEngine = selectTestEngine(evaluatedProject);
+			final TaskConfigurationOrchestrator orchestrator = new TaskConfigurationOrchestrator();
+			orchestrator
+				.use(ConfigurableTask.JAVA_COMPILE, new CompileJavaConfigurator(moduleConfig))
+				.use(ConfigurableTask.JAVA_TEST_COMPILE, new CompileTestJavaConfigurator(moduleConfig, testEngine))
+				.use(ConfigurableTask.JAVADOC, new GenerateJavadocConfigurator(moduleConfig))
+				.use(ConfigurableTask.TEST, new TestTaskConfigurator(moduleConfig, testEngine))
+				.use(ConfigurableTask.RUN, new RunTaskConfigurator(moduleConfig))
+				.use(ConfigurableTask.START_SCRIPTS, new CreateStartScriptsConfigurator(moduleConfig))
+				.configureTasks(evaluatedProject, "java");
 
-				project.getPluginManager().withPlugin(APPLICATION_PLUGIN, new Action<AppliedPlugin>() {
-					@Override
-					public void execute(AppliedPlugin appliedPlugin) {
-						orchestrator.configureTasks(project, "application");
-					}
-				});
-			}
+			evaluatedProject.getPluginManager()
+				.withPlugin(APPLICATION_PLUGIN, appliedPlugin -> orchestrator.configureTasks(evaluatedProject, "application"));
 		});
 	}
 }

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'com.zyxist'
-version = '0.2.0'
+version = '0.2.1'
 
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
@@ -21,6 +21,8 @@ repositories {
 }
 
 dependencies {
+	compile 'com.github.javaparser:javaparser-core:3.5.15'
+
 	testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
 		exclude module: 'groovy-all'
 	}

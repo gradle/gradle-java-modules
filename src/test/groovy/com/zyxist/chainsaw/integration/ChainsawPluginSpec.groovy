@@ -61,13 +61,42 @@ class ChainsawPluginSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
-				.withArguments("assemble")
-				.withPluginClasspath().build()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("assemble")
+			.withPluginClasspath().build()
 
 		then:
 		result.task(":compileJava").outcome == SUCCESS
 		result.task(":jar").outcome == SUCCESS
+		new File(tmpDir.root, "build/libs/modular.jar").exists()
+		new File(tmpDir.root, "build/classes/java/main/module-info.class").exists()
+		new File(tmpDir.root, "build/classes/java/main/com/example/AClass.class").exists()
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "can detect module name from sources"() {
+		given:
+		project
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.dontUseExplicitModuleName()
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("assemble", "--info")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":compileJava").outcome == SUCCESS
+		result.task(":jar").outcome == SUCCESS
+		result.output.contains("Inferred module name: com.example")
 		new File(tmpDir.root, "build/libs/modular.jar").exists()
 		new File(tmpDir.root, "build/classes/java/main/module-info.class").exists()
 		new File(tmpDir.root, "build/classes/java/main/com/example/AClass.class").exists()
@@ -85,11 +114,11 @@ class ChainsawPluginSpec extends Specification {
 
 		when:
 		def result = GradleRunner.create()
-				.withProjectDir(project.root)
-				.withDebug(true)
-				.forwardOutput()
-				.withArguments("check")
-				.withPluginClasspath().build()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
 
 		then:
 		result.task(":test").outcome == SUCCESS
