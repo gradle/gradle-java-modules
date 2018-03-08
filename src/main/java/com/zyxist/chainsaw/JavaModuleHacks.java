@@ -33,8 +33,8 @@ public class JavaModuleHacks {
 	private List<ExportItem> customExportItems = new ArrayList<>();
 	private Map<String, String> patchedDependencies = new LinkedHashMap<>();
 
-	public void opens(String openingModule, String openedModule, String destinationModule) {
-		this.customOpenItems.add(new OpenItem(openingModule, openedModule, destinationModule));
+	public void opens(String openedModule, String openedPackage, String destinationModule) {
+		this.customOpenItems.add(new OpenItem(openedModule, openedPackage, destinationModule));
 	}
 
 	public void reads(String srcModule, String dstModule) {

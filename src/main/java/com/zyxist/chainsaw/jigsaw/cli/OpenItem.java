@@ -20,18 +20,18 @@ import com.zyxist.chainsaw.jigsaw.JigsawFlags;
 import java.util.List;
 
 public class OpenItem implements ArgProducer {
-	private final String openingModule;
 	private final String openedModule;
+	private final String openedPackage;
 	private final String destinationModule;
 
-	public OpenItem(String openingModule, String openedModule, String destinationModule) {
+	public OpenItem(String openedModule, String openedPackage, String destinationModule) {
 		this.openedModule = openedModule;
-		this.openingModule = openingModule;
+		this.openedPackage = openedPackage;
 		this.destinationModule = destinationModule;
 	}
 
-	public String getOpeningModule() {
-		return openingModule;
+	public String getOpenedPackage() {
+		return openedPackage;
 	}
 
 	public String getOpenedModule() {
@@ -45,6 +45,6 @@ public class OpenItem implements ArgProducer {
 	@Override
 	public void toArgs(List<String> args) {
 		args.add(JigsawFlags.ADD_OPENS);
-		args.add(openingModule+"/"+openedModule+"="+destinationModule);
+		args.add(openedModule+"/"+openedPackage+"="+destinationModule);
 	}
 }

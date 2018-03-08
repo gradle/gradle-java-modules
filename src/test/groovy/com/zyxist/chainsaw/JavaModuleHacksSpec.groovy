@@ -40,4 +40,46 @@ class JavaModuleHacksSpec extends Specification {
 		args.contains("--add-exports")
 		args.contains("mod/pkg=other.mod")
 	}
+
+	def "it is possible to add multiple destinations to export"() {
+		given:
+		JigsawCLI cli = new JigsawCLI();
+		JavaModuleHacks hacks = new JavaModuleHacks();
+		hacks.exports("mod", "pkg", ["abc", "def"])
+
+		when:
+		hacks.applyHacks(cli)
+		def args = cli.generateArgs()
+
+		then:
+		args.contains("--add-exports")
+		args.contains("mod/pkg=abc,def")
+	}
+
+	def "it is possible to add multiple destinations to reads"() {
+		given:
+		JigsawCLI cli = new JigsawCLI();
+		JavaModuleHacks hacks = new JavaModuleHacks()
+		hacks.reads("mod", ["abc", "def"])
+
+		when:
+		hacks.applyHacks(cli)
+		def args = cli.generateArgs()
+
+		then:
+		args.contains("--add-reads")
+		args.contains("mod=abc,def")
+	}
+
+	def "it is possible to add patch dependencies"() {
+		given:
+		JavaModuleHacks hacks = new JavaModuleHacks()
+
+		when:
+		hacks.patches("com.example.group:artifactId", "com.example.else:something")
+
+		then:
+		hacks.patchedDependencies.size() == 1
+		hacks.patchedDependencies['com.example.group:artifactId'] == 'com.example.else:something'
+	}
 }

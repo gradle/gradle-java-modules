@@ -27,6 +27,9 @@ class OpenItemSpec extends Specification {
 		it.toArgs(args)
 
 		then:
+		it.openedModule == 'java.base'
+		it.openedPackage == 'java.lang'
+		it.destinationModule == 'my.module'
 		args.size() == 2
 		args.get(0) == '--add-opens'
 		args.get(1) == 'java.base/java.lang=my.module'
