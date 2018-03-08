@@ -19,9 +19,14 @@ import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.zyxist.chainsaw.builder.factory.JUnit4SampleTestFactory.junit4Test
 import static com.zyxist.chainsaw.builder.factory.RunnableHackingClassFactory.runnableHackingJavaClass
+import static com.zyxist.chainsaw.builder.factory.RunnableJavaClassFactory.runnableJavaClass
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class CustomFlagsSpec extends Specification {
 	@Rule
@@ -40,6 +45,7 @@ class CustomFlagsSpec extends Specification {
 
 	}
 
+	@IgnoreIf({NOT_JAVA_9})
 	def "it is possible to apply custom --add-opens flags to the runner"() {
 		given:
 		project
@@ -58,8 +64,35 @@ class CustomFlagsSpec extends Specification {
 			.withPluginClasspath().build()
 
 		then:
+		result.task(":run").outcome == SUCCESS
 		result.output.contains("--module-path")
 		result.output.contains("--add-opens java.base/java.lang=com.example")
 		result.output.contains("Success - old cglib will work")
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "it is possible to apply compiler arguments"() {
+		given:
+		project
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.withCompilerArgs("-proc:none")
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("assemble", "--debug")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":compileJava").outcome == SUCCESS
+		result.task(":jar").outcome == SUCCESS
+		result.output.contains("--module-path")
+		result.output.contains("-proc:none")
+		new File(tmpDir.root, "build/libs/modular.jar").exists()
 	}
 }

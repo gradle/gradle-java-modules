@@ -68,7 +68,7 @@ public class CompileTestJavaConfigurator implements TaskConfigurator<JavaCompile
 					.with(test.getJava().getSourceDirectories().getAsPath())
 			);
 
-			compileJava.getOptions().setCompilerArgs(cli.generateArgs());
+			compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
 			compileJava.setClasspath(project.files());
 		};
 	}

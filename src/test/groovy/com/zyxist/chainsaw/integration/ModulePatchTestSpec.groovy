@@ -63,7 +63,7 @@ class ModulePatchTestSpec extends Specification {
 			.withProjectDir(project.root)
 			.withDebug(true)
 			.forwardOutput()
-			.withArguments("assemble", '--debug')
+			.withArguments("assemble", '--info')
 			.withPluginClasspath().build()
 
 		then:

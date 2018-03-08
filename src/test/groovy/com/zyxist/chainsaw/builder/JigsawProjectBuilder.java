@@ -51,6 +51,8 @@ public class JigsawProjectBuilder {
 	private final List<String> openConfig = new ArrayList<>();
 	private final List<String> patchConfig = new ArrayList<>();
 
+	private final List<String> compilerArgs = new ArrayList<>();
+
 	private final List<String> patchDependencies = new ArrayList<>();
 	private final List<String> compileDependencies = new ArrayList<>();
 	private final List<String> runtimeDependencies = new ArrayList<>();
@@ -102,6 +104,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder useJavadoc() {
 		this.useJavadoc = true;
+		return this;
+	}
+
+	public JigsawProjectBuilder withCompilerArgs(String arg) {
+		this.compilerArgs.add(arg);
 		return this;
 	}
 
@@ -231,6 +238,7 @@ public class JigsawProjectBuilder {
 		generateDependencies(build);
 		generateApplicationConfig(build);
 		generateJavaModuleConfig(build);
+		generateCompilerArgs(build);
 		if (useJavadoc) {
 			generateJavadocConfig(build);
 		}
@@ -242,6 +250,16 @@ public class JigsawProjectBuilder {
 		ResourceGroovyMethods.leftShift(settingsfile, "rootProject.name = 'modular'\n");
 
 		return this;
+	}
+
+	private void generateCompilerArgs(StringBuilder build) {
+		if (!compilerArgs.isEmpty()) {
+			build.append("tasks.withType(JavaCompile) {\n");
+			for (String arg: compilerArgs) {
+				build.append("	   options.compilerArgs << '" +arg + "'\n");
+			}
+			build.append("}\n");
+		}
 	}
 
 	private void generateApplicationConfig(StringBuilder build) {

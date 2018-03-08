@@ -42,7 +42,7 @@ public class CompileJavaConfigurator implements TaskConfigurator<JavaCompile> {
 				.patchFrom(project, PATCH_CONFIGURATION_NAME)
 				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
 
-			compileJava.getOptions().setCompilerArgs(cli.generateArgs());
+			compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
 			compileJava.setClasspath(project.files());
 		};
 	}
