@@ -66,12 +66,12 @@ public class JigsawCLI {
 
 	public void toArgs(List<String> args) {
 		generateModulePath(args);
-		moduleFlag.toArgs(args);
 		moduleVersion.toArgs(args);
 		addModuleFlag.toArgs(args);
 		exportList.toArgs(args);
 		readList.toArgs(args);
 		patchList.toArgs(args);
+		moduleFlag.toArgs(args);
 	}
 
 	public List<String> generateArgs() {
