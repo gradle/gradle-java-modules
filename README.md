@@ -10,6 +10,8 @@ introduced by Java 9.
 Gradle doesn't currently support building Java 9 modules in a first-class way, except for a extremely limited
 `experimental-jigsaw` plugin. I decided to fork the plugin and extend it with a couple of necessary features.
 
+The full documentation and some tips, how to solve common problems with Jigsaw, can be found on wiki.
+
 ## Basic usage
 
 If you already have a working Java project, applying the plugin is just one step:
@@ -20,7 +22,7 @@ plugins {
 }
 ```
 
-Starting from version 0.2.1, the plugin automatically detects the module name from the sources.
+Starting from version 0.3.0, the plugin automatically detects the module name from the sources.
 In earlier versions, the module name had to be set manually in `build.gradle`:
 
 ```groovy
@@ -79,7 +81,9 @@ because of a package split. We can patch `jsr250.api` module to include all the 
  
 
 ```groovy
-javaModule.patchModules 'com.google.code.findbugs:jsr305': 'javax.annotation:jsr250-api'
+javaModule.hacks {
+    patches('com.google.code.findbugs:jsr305', 'javax.annotation:jsr250-api')
+}
 
 dependencies {
     patch 'com.google.code.findbugs:jsr305:1.3.9'
