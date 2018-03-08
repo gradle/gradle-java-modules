@@ -139,10 +139,11 @@ class ChainsawPluginSpec extends Specification {
 			.withProjectDir(project.root)
 			.withDebug(true)
 			.forwardOutput()
-			.withArguments("run")
+			.withArguments("run", "--info", "--stacktrace")
 			.withPluginClasspath().build()
 
 		then:
+		result.output.contains("--module-path")
 		result.output.contains("Hello World!")
 	}
 
@@ -160,10 +161,11 @@ class ChainsawPluginSpec extends Specification {
 			.withProjectDir(project.root)
 			.withDebug(true)
 			.forwardOutput()
-			.withArguments("run")
+			.withArguments("run", "--info")
 			.withPluginClasspath().build()
 
 		then:
+		result.output.contains("--module-path")
 		result.output.contains("Hello world")
 	}
 
@@ -181,10 +183,11 @@ class ChainsawPluginSpec extends Specification {
 			.withProjectDir(project.root)
 			.withDebug(true)
 			.forwardOutput()
-			.withArguments("run", "--stacktrace")
+			.withArguments("run", "--info", "--stacktrace")
 			.withPluginClasspath().build()
 
 		then:
+		result.output.contains("--module-path")
 		result.output.contains("Hello world")
 	}
 }

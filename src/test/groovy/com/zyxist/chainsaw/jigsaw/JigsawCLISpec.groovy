@@ -16,6 +16,7 @@
 package com.zyxist.chainsaw.jigsaw
 
 import com.zyxist.chainsaw.jigsaw.cli.ExportItem
+import com.zyxist.chainsaw.jigsaw.cli.OpenItem
 import com.zyxist.chainsaw.jigsaw.cli.PatchItem
 import com.zyxist.chainsaw.jigsaw.cli.ReadItem
 import spock.lang.Specification
@@ -97,6 +98,20 @@ class JigsawCLISpec extends Specification {
 
 		then:
 		result == '--module-path /foo/bar/joe --add-reads some.module=other.module'
+	}
+
+	def "should generate --add-opens"() {
+		given:
+		def cli = new JigsawCLI('/foo/bar/joe')
+		cli.openList()
+			.open(new OpenItem("some.module", "opened.module", "dst.module"))
+
+
+		when:
+		def result = cli.toString()
+
+		then:
+		result == '--module-path /foo/bar/joe --add-opens some.module/opened.module=dst.module'
 	}
 
 	def "should generate --patch-module"() {

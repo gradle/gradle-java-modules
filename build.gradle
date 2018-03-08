@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'com.zyxist'
-version = '0.2.1'
+version = '0.3.0'
 
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
@@ -59,7 +59,7 @@ pluginBundle {
 			id = 'com.zyxist.chainsaw'
 			displayName = 'Chainsaw: Java 9 Jigsaw support'
 			description = 'Adds a support for building and testing modular JDK9 applications with Gradle. '
-			tags = ['jigsaw', 'modules', 'java9']
+			tags = ['jigsaw', 'modules', 'java9', 'java']
 			version = project.version
 		}
 	}

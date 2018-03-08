@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 import java.io.File;
-import java.util.Optional;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
 
@@ -45,27 +44,31 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, JavaExec task) {
-		return (nothing) -> {};
+	public Action<Task> doFirst(Project project, final JavaExec run) {
+		return task -> {
+			final SourceSet mainSourceSet = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
+
+			File resourceOutDir = mainSourceSet.getOutput().getResourcesDir();
+			JigsawCLI cli = new JigsawCLI(stripResources(run.getClasspath().getAsPath(), resourceOutDir));
+			cli.module(moduleConfig.getName(), run.getMain());
+			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+			patcher
+				.patchFrom(project, PATCH_CONFIGURATION_NAME)
+				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+
+			cli.patchList().patch(new PatchItem(moduleConfig.getName()).with(resourceOutDir.getAbsolutePath()));
+			moduleConfig.getHacks().applyHacks(cli);
+
+			run.setJvmArgs(cli.generateArgs());
+			run.setClasspath(project.files());
+		};
 	}
 
-	@Override
-	public Optional<Action<Task>> doLast(final Project project, final JavaExec run) {
-		return Optional.of(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				final SourceSet mainSourceSet = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
-				JigsawCLI cli = new JigsawCLI(run.getClasspath().getAsPath());
-				cli.module(moduleConfig.getName(), run.getMain());
-
-				ModulePatcher patcher = new ModulePatcher(moduleConfig.getPatchModules());
-				patcher
-					.patchFrom(project, PATCH_CONFIGURATION_NAME)
-					.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
-
-				run.setJvmArgs(cli.generateArgs());
-				run.setClasspath(project.files());
-			}
-		});
+	private String stripResources(String classpath, File resourceOutputDir) {
+		String outPath = ":" + resourceOutputDir.getAbsolutePath();
+		if (classpath.contains(outPath)) {
+			return classpath.replace(outPath, "");
+		}
+		return classpath;
 	}
 }

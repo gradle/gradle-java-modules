@@ -48,6 +48,7 @@ public class JigsawProjectBuilder {
 	private final List<String> exportedPackages = new ArrayList<>();
 
 	private final List<String> extraTestModules = new ArrayList<>();
+	private final List<String> openConfig = new ArrayList<>();
 	private final List<String> patchConfig = new ArrayList<>();
 
 	private final List<String> patchDependencies = new ArrayList<>();
@@ -124,8 +125,13 @@ public class JigsawProjectBuilder {
 		return this;
 	}
 
+	public JigsawProjectBuilder openedModule(String opening, String opened, String destination) {
+		this.openConfig.add("opens('"+opening+"', '"+opened+"', '"+destination+"')");
+		return this;
+	}
+
 	public JigsawProjectBuilder patchedModule(String patch, String patched) {
-		this.patchConfig.add("'" + patch + "': '" + patched+"'");
+		this.patchConfig.add("patches('" + patch + "', '" + patched+"')");
 		return this;
 	}
 
@@ -254,8 +260,15 @@ public class JigsawProjectBuilder {
 		if (!extraTestModules.isEmpty()) {
 			build.append("javaModule.extraTestModules = ['" + String.join("', '", extraTestModules) + "']\n");
 		}
-		if (!patchConfig.isEmpty()) {
-			build.append("javaModule.patchModules " + String.join(",\n", patchConfig) + "\n");
+		if (!patchConfig.isEmpty() || ! openConfig.isEmpty()) {
+			build.append("javaModule.hacks {\n");
+			for (String open : openConfig) {
+				build.append("	" + open + "\n");
+			}
+			for (String patch : patchConfig) {
+				build.append("	" + patch + "\n");
+			}
+			build.append("}\n");
 		}
 	}
 

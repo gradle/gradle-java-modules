@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,31 +48,28 @@ public class CompileTestJavaConfigurator implements TaskConfigurator<JavaCompile
 
 	@Override
 	public Action<Task> doFirst(Project project, JavaCompile compileJava) {
-		return new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
-				ModulePatcher patcher = new ModulePatcher(moduleConfig.getPatchModules());
-				final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+		return task -> {
+			JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
+			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+			final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
 
-				cli.addModules()
-					.addAll(testEngine.getTestEngineModules())
-					.addAll(moduleConfig.getExtraTestModules());
-				cli.readList()
-					.read(new ReadItem(moduleConfig.getName())
-						.toAll(testEngine.getTestEngineModules())
-						.toAll(moduleConfig.getExtraTestModules()));
-				patcher
-					.patchFrom(project, PATCH_CONFIGURATION_NAME)
-					.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
-				cli.patchList().patch(
-					new PatchItem(moduleConfig.getName())
-						.with(test.getJava().getSourceDirectories().getAsPath())
-				);
+			cli.addModules()
+				.addAll(testEngine.getTestEngineModules())
+				.addAll(moduleConfig.getExtraTestModules());
+			cli.readList()
+				.read(new ReadItem(moduleConfig.getName())
+					.toAll(testEngine.getTestEngineModules())
+					.toAll(moduleConfig.getExtraTestModules()));
+			patcher
+				.patchFrom(project, PATCH_CONFIGURATION_NAME)
+				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+			cli.patchList().patch(
+				new PatchItem(moduleConfig.getName())
+					.with(test.getJava().getSourceDirectories().getAsPath())
+			);
 
-				compileJava.getOptions().setCompilerArgs(cli.generateArgs());
-				compileJava.setClasspath(project.files());
-			}
+			compileJava.getOptions().setCompilerArgs(cli.generateArgs());
+			compileJava.setClasspath(project.files());
 		};
 	}
 }

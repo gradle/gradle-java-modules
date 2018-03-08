@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package com.zyxist.chainsaw;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import org.gradle.api.Action;
+
+import java.util.*;
 
 /**
  * Represents information about a Java 9 module.
@@ -27,7 +26,7 @@ public class JavaModule {
 	private String moduleName;
 	private boolean allowModuleNamingViolations = false;
 	private List<String> addTestModules = new ArrayList<>();
-	private Map<String, String> patchModules = new LinkedHashMap<>();
+	private JavaModuleHacks hacks = new JavaModuleHacks();
 
 	public String getName() {
 		return moduleName;
@@ -53,11 +52,11 @@ public class JavaModule {
 		this.addTestModules = testModules;
 	}
 
-	public Map<String, String> getPatchModules() {
-		return patchModules;
+	public void hacks(Action<? super JavaModuleHacks> action) {
+		action.execute(hacks);
 	}
 
-	public void setPatchModules(Map<String, String> patchModules) {
-		this.patchModules = patchModules;
+	public JavaModuleHacks getHacks() {
+		return hacks;
 	}
 }

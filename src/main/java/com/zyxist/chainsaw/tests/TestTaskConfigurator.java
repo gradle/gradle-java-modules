@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,30 +48,28 @@ public class TestTaskConfigurator implements TaskConfigurator<Test> {
 
 	@Override
 	public Action<Task> doFirst(Project project, final Test testTask) {
-		return new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				JigsawCLI cli = new JigsawCLI(testTask.getClasspath().getAsPath());
-				ModulePatcher patcher = new ModulePatcher(moduleConfig.getPatchModules());
-				final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+		return task -> {
+			JigsawCLI cli = new JigsawCLI(testTask.getClasspath().getAsPath());
+			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+			final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
 
-				cli.addModules()
-					.addAllModulePath();
-				cli.readList()
-					.read(new ReadItem(moduleConfig.getName())
-						.toAll(testEngine.getTestEngineModules())
-						.toAll(moduleConfig.getExtraTestModules()));
-				patcher
-					.patchFrom(project, PATCH_CONFIGURATION_NAME)
-					.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
-				cli.patchList().patch(
-					new PatchItem(moduleConfig.getName())
-						.with(test.getJava().getOutputDir().getAbsolutePath())
-				);
+			cli.addModules()
+				.addAllModulePath();
+			cli.readList()
+				.read(new ReadItem(moduleConfig.getName())
+					.toAll(testEngine.getTestEngineModules())
+					.toAll(moduleConfig.getExtraTestModules()));
+			moduleConfig.getHacks().applyHacks(cli);
+			patcher
+				.patchFrom(project, PATCH_CONFIGURATION_NAME)
+				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+			cli.patchList().patch(
+				new PatchItem(moduleConfig.getName())
+					.with(test.getJava().getOutputDir().getAbsolutePath())
+			);
 
-				testTask.setJvmArgs(cli.generateArgs());
-				testTask.setClasspath(project.files());
-			}
+			testTask.setJvmArgs(cli.generateArgs());
+			testTask.setClasspath(project.files());
 		};
 	}
 }

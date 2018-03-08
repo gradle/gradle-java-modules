@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.zyxist.chainsaw.jigsaw.cli;
 import com.zyxist.chainsaw.jigsaw.JigsawFlags;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
@@ -35,6 +36,11 @@ public class ExportItem implements ArgProducer {
 
 	public ExportItem to(String module) {
 		this.dstModules.add(module);
+		return this;
+	}
+
+	public ExportItem toAll(Collection<String> modules) {
+		this.dstModules.addAll(modules);
 		return this;
 	}
 

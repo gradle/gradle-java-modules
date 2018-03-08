@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,18 +35,15 @@ public class CompileJavaConfigurator implements TaskConfigurator<JavaCompile> {
 
 	@Override
 	public Action<Task> doFirst(Project project, JavaCompile compileJava) {
-		return new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
-				ModulePatcher patcher = new ModulePatcher(moduleConfig.getPatchModules());
-				patcher
-					.patchFrom(project, PATCH_CONFIGURATION_NAME)
-					.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+		return task -> {
+			JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
+			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+			patcher
+				.patchFrom(project, PATCH_CONFIGURATION_NAME)
+				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
 
-				compileJava.getOptions().setCompilerArgs(cli.generateArgs());
-				compileJava.setClasspath(project.files());
-			}
+			compileJava.getOptions().setCompilerArgs(cli.generateArgs());
+			compileJava.setClasspath(project.files());
 		};
 	}
 }

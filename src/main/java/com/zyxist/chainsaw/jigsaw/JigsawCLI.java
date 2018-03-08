@@ -33,6 +33,7 @@ public class JigsawCLI {
 	private final PatchListFlag patchList = new PatchListFlag();
 	private final ExportListFlag exportList = new ExportListFlag();
 	private final ReadListFlag readList = new ReadListFlag();
+	private final OpenListFlag openList = new OpenListFlag();
 
 	public JigsawCLI(String modulePath) {
 		this.modulePath = modulePath;
@@ -64,11 +65,16 @@ public class JigsawCLI {
 		return this.readList;
 	}
 
+	public OpenListFlag openList() {
+		return openList;
+	}
+
 	public void toArgs(List<String> args) {
 		generateModulePath(args);
 		moduleVersion.toArgs(args);
 		addModuleFlag.toArgs(args);
 		exportList.toArgs(args);
+		openList.toArgs(args);
 		readList.toArgs(args);
 		patchList.toArgs(args);
 		moduleFlag.toArgs(args);
