@@ -45,6 +45,9 @@ public class ModuleNameDetector {
 
 	public String findModuleName(File sourceDir) {
 		try {
+			if (!sourceDir.exists()) {
+				return null;
+			}
 			File moduleDescriptor = new File(sourceDir, "module-info.java");
 			if (!moduleDescriptor.exists()) {
 				throw new GradleException("The project is lacking a Java module descriptor in '" + sourceDir.getPath() + "' directory.");
