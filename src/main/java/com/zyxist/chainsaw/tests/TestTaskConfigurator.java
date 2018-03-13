@@ -29,6 +29,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.testing.Test;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
 
@@ -47,8 +48,8 @@ public class TestTaskConfigurator implements TaskConfigurator<Test> {
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, final Test testTask) {
-		return task -> {
+	public Optional<Action<Task>> doFirst(Project project, final Test testTask) {
+		return Optional.of(task -> {
 			JigsawCLI cli = new JigsawCLI(testTask.getClasspath().getAsPath());
 			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
 			final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
@@ -70,6 +71,6 @@ public class TestTaskConfigurator implements TaskConfigurator<Test> {
 
 			testTask.setJvmArgs(cli.generateArgs());
 			testTask.setClasspath(project.files());
-		};
+		});
 	}
 }

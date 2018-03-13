@@ -40,6 +40,7 @@ public class JigsawProjectBuilder {
 	private boolean useApt = false;
 	private boolean useJavadoc = false;
 	private boolean allowNameViolations = false;
+	private boolean incrementalCompilation = false;
 
 	private final List<String> applyPluginClasspath = new ArrayList<>();
 	private final List<String> appliedPlugins = new ArrayList<>();
@@ -114,6 +115,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder dontUseExplicitModuleName() {
 		this.useExplicitModuleName = false;
+		return this;
+	}
+
+	public JigsawProjectBuilder enableIncrementalCompilation() {
+		this.incrementalCompilation = true;
 		return this;
 	}
 
@@ -199,6 +205,11 @@ public class JigsawProjectBuilder {
 		return createFile(path, factory);
 	}
 
+	public JigsawProjectBuilder replaceJavaFile(JavaCodeFactory factory) throws IOException {
+		String path = JAVA_SRC + "/" + factory.getFilename(this);
+		return replaceFile(path, factory);
+	}
+
 	public JigsawProjectBuilder createJavaResourceFile(JavaCodeFactory factory) throws IOException {
 		String path = JAVA_RESOURCES + "/" + factory.getFilename(this);
 		return createFile(path, factory);
@@ -217,6 +228,17 @@ public class JigsawProjectBuilder {
 	private JigsawProjectBuilder createFile(String path, JavaCodeFactory factory) throws IOException {
 		createDirectories(path);
 		File file = tmpDir.newFile(path);
+		ResourceGroovyMethods.leftShift(file, factory.generateCode(this));
+		return this;
+	}
+
+	private JigsawProjectBuilder replaceFile(String path, JavaCodeFactory factory) throws IOException {
+		createDirectories(path);
+		File file = new File(tmpDir.getRoot(), path);
+		if (file.exists()) {
+			file.delete();
+		}
+		file = tmpDir.newFile(path);
 		ResourceGroovyMethods.leftShift(file, factory.generateCode(this));
 		return this;
 	}
@@ -253,10 +275,13 @@ public class JigsawProjectBuilder {
 	}
 
 	private void generateCompilerArgs(StringBuilder build) {
-		if (!compilerArgs.isEmpty()) {
+		if (!compilerArgs.isEmpty() || incrementalCompilation) {
 			build.append("tasks.withType(JavaCompile) {\n");
 			for (String arg: compilerArgs) {
 				build.append("	   options.compilerArgs << '" +arg + "'\n");
+			}
+			if (incrementalCompilation) {
+				build.append("     options.incremental = true\n");
 			}
 			build.append("}\n");
 		}

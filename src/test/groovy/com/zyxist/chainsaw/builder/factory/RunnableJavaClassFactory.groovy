@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,18 @@ import com.zyxist.chainsaw.builder.JavaCodeFactory
 import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 
 class RunnableJavaClassFactory implements JavaCodeFactory {
+	private final String textToDisplay;
+
+	RunnableJavaClassFactory(String textToDisplay) {
+		this.textToDisplay = textToDisplay
+	}
+
 	static RunnableJavaClassFactory runnableJavaClass() {
-		return new RunnableJavaClassFactory();
+		return new RunnableJavaClassFactory("Hello World!")
+	}
+
+	static RunnableJavaClassFactory runnableJavaClass(String textToDisplay) {
+		return new RunnableJavaClassFactory(textToDisplay)
 	}
 
 	@Override
@@ -38,7 +48,7 @@ public class AClass {
   }
   
   public static void main(String... args) {
-    new AClass().aMethod("Hello World!");
+    new AClass().aMethod("${this.textToDisplay}");
   }
 }
 """

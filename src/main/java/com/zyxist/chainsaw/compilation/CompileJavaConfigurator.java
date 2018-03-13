@@ -19,9 +19,7 @@ import com.zyxist.chainsaw.JavaModule;
 import com.zyxist.chainsaw.TaskConfigurator;
 import com.zyxist.chainsaw.algorithms.ModulePatcher;
 import com.zyxist.chainsaw.jigsaw.JigsawCLI;
-import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.tasks.compile.JavaCompile;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
@@ -34,16 +32,14 @@ public class CompileJavaConfigurator implements TaskConfigurator<JavaCompile> {
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, JavaCompile compileJava) {
-		return task -> {
-			JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
-			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
-			patcher
-				.patchFrom(project, PATCH_CONFIGURATION_NAME)
-				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+	public void updateConfiguration(Project project, JavaCompile compileJava) {
+		JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
+		ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+		patcher
+			.patchFrom(project, PATCH_CONFIGURATION_NAME)
+			.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
 
-			compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
-			compileJava.setClasspath(project.files());
-		};
+		compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
+		compileJava.setClasspath(project.files());
 	}
 }

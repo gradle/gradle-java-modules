@@ -21,9 +21,7 @@ import com.zyxist.chainsaw.algorithms.ModulePatcher;
 import com.zyxist.chainsaw.jigsaw.JigsawCLI;
 import com.zyxist.chainsaw.jigsaw.cli.PatchItem;
 import com.zyxist.chainsaw.jigsaw.cli.ReadItem;
-import org.gradle.api.Action;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -42,34 +40,28 @@ public class CompileTestJavaConfigurator implements TaskConfigurator<JavaCompile
 	}
 
 	@Override
-	public void updateConfiguration(Project project, JavaCompile task) {
-		task.getInputs().property("moduleName", moduleConfig.getName());
-	}
+	public void updateConfiguration(Project project, JavaCompile compileJava) {
+		compileJava.getInputs().property("moduleName", moduleConfig.getName());
+		JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
+		ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
+		final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
 
-	@Override
-	public Action<Task> doFirst(Project project, JavaCompile compileJava) {
-		return task -> {
-			JigsawCLI cli = new JigsawCLI(compileJava.getClasspath().getAsPath());
-			ModulePatcher patcher = new ModulePatcher(moduleConfig.getHacks().getPatchedDependencies());
-			final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
+		cli.addModules()
+			.addAll(testEngine.getTestEngineModules())
+			.addAll(moduleConfig.getExtraTestModules());
+		cli.readList()
+			.read(new ReadItem(moduleConfig.getName())
+				.toAll(testEngine.getTestEngineModules())
+				.toAll(moduleConfig.getExtraTestModules()));
+		patcher
+			.patchFrom(project, PATCH_CONFIGURATION_NAME)
+			.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
+		cli.patchList().patch(
+			new PatchItem(moduleConfig.getName())
+				.with(test.getJava().getSourceDirectories().getAsPath())
+		);
 
-			cli.addModules()
-				.addAll(testEngine.getTestEngineModules())
-				.addAll(moduleConfig.getExtraTestModules());
-			cli.readList()
-				.read(new ReadItem(moduleConfig.getName())
-					.toAll(testEngine.getTestEngineModules())
-					.toAll(moduleConfig.getExtraTestModules()));
-			patcher
-				.patchFrom(project, PATCH_CONFIGURATION_NAME)
-				.forEach((k, patchedModule) -> cli.patchList().patch(patchedModule));
-			cli.patchList().patch(
-				new PatchItem(moduleConfig.getName())
-					.with(test.getJava().getSourceDirectories().getAsPath())
-			);
-
-			compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
-			compileJava.setClasspath(project.files());
-		};
+		compileJava.getOptions().getCompilerArgs().addAll(cli.generateArgs());
+		compileJava.setClasspath(project.files());
 	}
 }

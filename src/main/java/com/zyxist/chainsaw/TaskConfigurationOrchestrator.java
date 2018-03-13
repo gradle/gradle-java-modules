@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.zyxist.chainsaw;
 
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 
@@ -47,12 +46,14 @@ public class TaskConfigurationOrchestrator {
 		});
 	}
 
-	private void configureTask(Project project, ConfigurableTask taskType, TaskConfigurator configurator) {
+	private void configureTask(Project project, ConfigurableTask taskType, TaskConfigurator<Task> configurator) {
 		final Task task = project.getTasks().findByName(taskType.taskName());
 		configurator.updateConfiguration(project, task);
-		task.doFirst(configurator.doFirst(project, task));
+		configurator
+			.doFirst(project, task)
+			.ifPresent(action -> task.doFirst(action));
 		configurator
 			.doLast(project, task)
-			.ifPresent(action -> task.doLast((Action<Task>)action));
+			.ifPresent(action -> task.doLast(action));
 	}
 }

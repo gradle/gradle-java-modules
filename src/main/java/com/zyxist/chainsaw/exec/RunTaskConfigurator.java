@@ -28,6 +28,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 import java.io.File;
+import java.util.Optional;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
 
@@ -44,8 +45,8 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, final JavaExec run) {
-		return task -> {
+	public Optional<Action<Task>> doFirst(Project project, final JavaExec run) {
+		return Optional.of(task -> {
 			final SourceSet mainSourceSet = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("main");
 
 			File resourceOutDir = mainSourceSet.getOutput().getResourcesDir();
@@ -61,7 +62,7 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 
 			run.setJvmArgs(cli.generateArgs());
 			run.setClasspath(project.files());
-		};
+		});
 	}
 
 	private String stripResources(String classpath, File resourceOutputDir) {

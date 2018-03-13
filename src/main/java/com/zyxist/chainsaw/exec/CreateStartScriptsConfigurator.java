@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,29 +47,23 @@ public class CreateStartScriptsConfigurator implements TaskConfigurator<CreateSt
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, CreateStartScripts startScripts) {
-		return new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				JigsawCLI cli = new JigsawCLI(LIBS_PLACEHOLDER);
-				cli.module(moduleConfig.getName(), startScripts.getMainClassName());
+	public Optional<Action<Task>> doFirst(Project project, CreateStartScripts startScripts) {
+		return Optional.of(task -> {
+			JigsawCLI cli = new JigsawCLI(LIBS_PLACEHOLDER);
+			cli.module(moduleConfig.getName(), startScripts.getMainClassName());
 
-				startScripts.setClasspath(project.files());
-				startScripts.setDefaultJvmOpts(cli.generateArgs());
-			}
-		};
+			startScripts.setClasspath(project.files());
+			startScripts.setDefaultJvmOpts(cli.generateArgs());
+		});
 	}
 
 	@Override
 	public Optional<Action<Task>> doLast(Project project, CreateStartScripts startScripts) {
-		return Optional.of(new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
-				replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
-				File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
-				replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\lib");
-			}
+		return Optional.of(task -> {
+			File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
+			replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
+			File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
+			replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\lib");
 		});
 	}
 

@@ -25,6 +25,8 @@ import org.gradle.api.Task;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.external.javadoc.StandardJavadocDocletOptions;
 
+import java.util.Optional;
+
 public class GenerateJavadocConfigurator implements TaskConfigurator<Javadoc> {
 	private final JavaModule moduleConfig;
 
@@ -33,14 +35,11 @@ public class GenerateJavadocConfigurator implements TaskConfigurator<Javadoc> {
 	}
 
 	@Override
-	public Action<Task> doFirst(Project project, Javadoc javadoc) {
-		return new Action<Task>() {
-			@Override
-			public void execute(Task task) {
-				JigsawCLI cli = new JigsawCLI(javadoc.getClasspath().getAsPath());
-				StandardJavadocDocletOptions options = (StandardJavadocDocletOptions) javadoc.getOptions();
-				options.addStringOption(JigsawFlags.JAVADOC_MODULE_PATH, cli.getModulePath());
-			}
-		};
+	public Optional<Action<Task>> doFirst(Project project, Javadoc javadoc) {
+		return Optional.of(task -> {
+			JigsawCLI cli = new JigsawCLI(javadoc.getClasspath().getAsPath());
+			StandardJavadocDocletOptions options = (StandardJavadocDocletOptions) javadoc.getOptions();
+			options.addStringOption(JigsawFlags.JAVADOC_MODULE_PATH, cli.getModulePath());
+		});
 	}
 }

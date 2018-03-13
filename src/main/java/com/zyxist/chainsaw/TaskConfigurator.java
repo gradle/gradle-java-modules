@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ public interface TaskConfigurator<T> {
 	default void updateConfiguration(Project project, T task) {
 	}
 
-	Action<Task> doFirst(final Project project, final T task);
+	default Optional<Action<Task>> doFirst(final Project project, final T task) {
+		return Optional.empty();
+	}
 
 	default Optional<Action<Task>> doLast(final Project project, final T task) {
 		return Optional.empty();
