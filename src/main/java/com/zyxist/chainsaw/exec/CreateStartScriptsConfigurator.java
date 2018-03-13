@@ -51,6 +51,7 @@ public class CreateStartScriptsConfigurator implements TaskConfigurator<CreateSt
 		return Optional.of(task -> {
 			JigsawCLI cli = new JigsawCLI(LIBS_PLACEHOLDER);
 			cli.module(moduleConfig.getName(), startScripts.getMainClassName());
+			moduleConfig.getHacks().applyHacks(cli);
 
 			startScripts.setClasspath(project.files());
 			startScripts.setDefaultJvmOpts(cli.generateArgs());
@@ -63,7 +64,7 @@ public class CreateStartScriptsConfigurator implements TaskConfigurator<CreateSt
 			File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
 			replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
 			File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
-			replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\lib");
+			replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\\\\\\\lib");
 		});
 	}
 

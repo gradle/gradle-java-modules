@@ -22,6 +22,7 @@ public class Dependencies {
 	public static final String JUNIT5_ENGINE_DEPENDENCY = "org.junit.jupiter:junit-jupiter-engine:5.0.0";
 	public static final String MOCKITO_DEPENDENCY = "org.mockito:mockito-core:2.11.0";
 	public static final String GUAVA_DEPENDENCY = "com.google.guava:guava:23.2-jre";
+	public static final String GUICE_DEPENDENCY = "com.google.inject:guice:4.2.0";
 	public static final String DAGGER_DEPENDENCY = "com.google.dagger:dagger:2.11";
 	public static final String DAGGER_COMPILER_DEPENDENCY = "com.google.dagger:dagger-compiler:2.11";
 

@@ -138,8 +138,8 @@ public class JigsawProjectBuilder {
 		return this;
 	}
 
-	public JigsawProjectBuilder openedModule(String opening, String opened, String destination) {
-		this.openConfig.add("opens('"+opening+"', '"+opened+"', '"+destination+"')");
+	public JigsawProjectBuilder openedModule(String opening, String openedPackage, String destination) {
+		this.openConfig.add("opens('"+opening+"', '"+openedPackage+"', '"+destination+"')");
 		return this;
 	}
 
