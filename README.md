@@ -82,7 +82,7 @@ because of a package split. We can patch `jsr250.api` module to include all the 
 
 ```groovy
 javaModule.hacks {
-    patches('com.google.code.findbugs:jsr305', 'javax.annotation:jsr250-api')
+    patches('com.google.code.findbugs:jsr305', 'jsr250.api')
 }
 
 dependencies {
