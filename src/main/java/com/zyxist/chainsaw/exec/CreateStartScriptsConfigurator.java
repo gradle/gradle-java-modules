@@ -17,20 +17,16 @@ package com.zyxist.chainsaw.exec;
 
 import com.zyxist.chainsaw.JavaModule;
 import com.zyxist.chainsaw.TaskConfigurator;
+import com.zyxist.chainsaw.algorithms.FileRewriter;
+import com.zyxist.chainsaw.algorithms.RewritingOutput;
 import com.zyxist.chainsaw.jigsaw.JigsawCLI;
 import org.gradle.api.Action;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.application.CreateStartScripts;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class CreateStartScriptsConfigurator implements TaskConfigurator<CreateStartScripts> {
@@ -61,22 +57,27 @@ public class CreateStartScriptsConfigurator implements TaskConfigurator<CreateSt
 	@Override
 	public Optional<Action<Task>> doLast(Project project, CreateStartScripts startScripts) {
 		return Optional.of(task -> {
-			File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
-			replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
-			File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
-			replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\\\\\\\lib");
+			FileRewriter bashRewriter = new FileRewriter(new File(startScripts.getOutputDir(), startScripts.getApplicationName()), FileRewriter.LineEndings.UNIX);
+			FileRewriter batRewriter = new FileRewriter(new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat"), FileRewriter.LineEndings.WINDOWS);
+
+			bashRewriter.rewrite(this::transformUnixFile);
+			batRewriter.rewrite(this::transformWindowsFile);
 		});
 	}
 
-	private void replaceLibsPlaceHolder(Path path, String newText) {
-		try {
-			List<String> bashContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
-			for (int i = 0; i < bashContent.size(); i++) {
-				bashContent.set(i, bashContent.get(i).replaceFirst(LIBS_PLACEHOLDER, newText));
-			}
-			Files.write(path, bashContent, StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			throw new GradleException("Couldn't replace placeholder in " + path);
+	void transformUnixFile(String line, RewritingOutput output) throws IOException {
+		if (line.contains(LIBS_PLACEHOLDER)) {
+			output.emitLine(line.replaceFirst(LIBS_PLACEHOLDER, "\\$APP_HOME/lib"));
+		} else {
+			output.emitLine(line);
+		}
+	}
+
+	void transformWindowsFile(String line, RewritingOutput output) throws IOException {
+		if (line.contains(LIBS_PLACEHOLDER)) {
+			output.emitLine(line.replaceFirst(LIBS_PLACEHOLDER, "%APP_HOME%\\\\\\\\lib"));
+		} else {
+			output.emitLine(line);
 		}
 	}
 }

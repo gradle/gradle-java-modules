@@ -96,13 +96,44 @@ class StartScriptsSpec extends Specification {
 
 	}
 
-	@IgnoreIf({NOT_JAVA_9; NOT_IMPLEMENTED})
+	@IgnoreIf({NOT_JAVA_9})
 	def "Windows script retains line endings characteristic for that platform"() {
+		given:
+		project
+			.openedModule("com.example", "com.example", "com.google.guice")
+			.createModuleDescriptor()
+			.createGradleBuild()
 
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("installDist", "--stacktrace")
+			.withPluginClasspath().build()
+
+		then:
+		new File(tmpDir.root, "build/install/modular/bin/modular.bat").text.contains("\r\n")
 	}
 
-	@IgnoreIf({NOT_JAVA_9; NOT_IMPLEMENTED})
+	@IgnoreIf({NOT_JAVA_9})
 	def "Unix script retains line endings characteristic for that platform"() {
+		given:
+		project
+			.openedModule("com.example", "com.example", "com.google.guice")
+			.createModuleDescriptor()
+			.createGradleBuild()
 
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("installDist", "--stacktrace")
+			.withPluginClasspath().build()
+
+		then:
+		!new File(tmpDir.root, "build/install/modular/bin/modular").text.contains("\r\n")
+		new File(tmpDir.root, "build/install/modular/bin/modular").text.contains("\n")
 	}
 }
