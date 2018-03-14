@@ -28,6 +28,8 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.testing.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -69,7 +71,10 @@ public class TestTaskConfigurator implements TaskConfigurator<Test> {
 					.with(test.getJava().getOutputDir().getAbsolutePath())
 			);
 
-			testTask.setJvmArgs(cli.generateArgs());
+			List<String> jvmArgs = new ArrayList<>();
+			jvmArgs.addAll(testTask.getJvmArgs());
+			jvmArgs.addAll(cli.generateArgs());
+			testTask.setJvmArgs(jvmArgs);
 			testTask.setClasspath(project.files());
 		});
 	}

@@ -15,6 +15,7 @@
  */
 package com.zyxist.chainsaw.integration
 
+import com.zyxist.chainsaw.builder.Dependencies
 import com.zyxist.chainsaw.builder.JigsawProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
@@ -94,5 +95,55 @@ class CustomFlagsSpec extends Specification {
 		result.output.contains("--module-path")
 		result.output.contains("-proc:none")
 		new File(tmpDir.root, "build/libs/modular.jar").exists()
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "it is possible to apply custom JVM arguments"() {
+		given:
+		project
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.withJvmArgs("-XX:NewSize=64M")
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("run", "--debug")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":run").outcome == SUCCESS
+		result.output.contains("--module-path")
+		result.output.contains("-XX:NewSize=64M")
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "it is possible to apply custom JVM arguments for tests"() {
+		given:
+		project
+			.testCompileDependency(Dependencies.JUNIT4_DEPENDENCY)
+			.mainClass("com.example.AClass")
+			.createJavaFile(runnableJavaClass())
+			.createJavaTestFile(junit4Test())
+			.withTestJvmArgs("-XX:NewSize=128M")
+			.createModuleDescriptor()
+			.createGradleBuild()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(project.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check", "--debug")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":test").outcome == SUCCESS
+		result.output.contains("--module-path")
+		result.output.contains("-XX:NewSize=128M")
 	}
 }

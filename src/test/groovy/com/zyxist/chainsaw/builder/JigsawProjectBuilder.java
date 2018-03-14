@@ -53,6 +53,8 @@ public class JigsawProjectBuilder {
 	private final List<String> patchConfig = new ArrayList<>();
 
 	private final List<String> compilerArgs = new ArrayList<>();
+	private final List<String> jvmArgs = new ArrayList<>();
+	private final List<String> testJvmArgs = new ArrayList<>();
 
 	private final List<String> patchDependencies = new ArrayList<>();
 	private final List<String> compileDependencies = new ArrayList<>();
@@ -110,6 +112,16 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder withCompilerArgs(String arg) {
 		this.compilerArgs.add(arg);
+		return this;
+	}
+
+	public JigsawProjectBuilder withJvmArgs(String arg) {
+		this.jvmArgs.add(arg);
+		return this;
+	}
+
+	public JigsawProjectBuilder withTestJvmArgs(String arg) {
+		this.testJvmArgs.add(arg);
 		return this;
 	}
 
@@ -259,6 +271,7 @@ public class JigsawProjectBuilder {
 		generateRepositories(build);
 		generateDependencies(build);
 		generateApplicationConfig(build);
+		generateTestConfig(build);
 		generateJavaModuleConfig(build);
 		generateCompilerArgs(build);
 		if (useJavadoc) {
@@ -290,6 +303,23 @@ public class JigsawProjectBuilder {
 	private void generateApplicationConfig(StringBuilder build) {
 		if (null != mainClassName) {
 			build.append("mainClassName = '"+mainClassName+"'\n");
+		}
+		if (!jvmArgs.isEmpty()) {
+			build.append("run {\n");
+			for (String arg: jvmArgs) {
+				build.append("    jvmArgs << '" + arg + "';\n");
+			}
+			build.append("}\n");
+		}
+	}
+
+	private void generateTestConfig(StringBuilder build) {
+		if (!testJvmArgs.isEmpty()) {
+			build.append("test {\n");
+			for (String arg: testJvmArgs) {
+				build.append("    jvmArgs '" + arg + "'\n");
+			}
+			build.append("}\n");
 		}
 	}
 

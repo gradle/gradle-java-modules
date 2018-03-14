@@ -28,6 +28,8 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static com.zyxist.chainsaw.ChainsawPlugin.PATCH_CONFIGURATION_NAME;
@@ -60,7 +62,10 @@ public class RunTaskConfigurator implements TaskConfigurator<JavaExec> {
 			cli.patchList().patch(new PatchItem(moduleConfig.getName()).with(resourceOutDir.getAbsolutePath()));
 			moduleConfig.getHacks().applyHacks(cli);
 
-			run.setJvmArgs(cli.generateArgs());
+			List<String> jvmArgs = new ArrayList<>();
+			jvmArgs.addAll(run.getJvmArgs());
+			jvmArgs.addAll(cli.generateArgs());
+			run.setJvmArgs(jvmArgs);
 			run.setClasspath(project.files());
 		});
 	}
