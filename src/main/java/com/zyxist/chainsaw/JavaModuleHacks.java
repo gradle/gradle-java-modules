@@ -53,8 +53,8 @@ public class JavaModuleHacks {
 		this.customExportItems.add(new ExportItem(module, exportedPackage).toAll(dstModules));
 	}
 
-	public void patches(String patchedDependency, String patchingDependency) {
-		this.patchedDependencies.put(patchedDependency, patchingDependency);
+	public void patches(String patchingDependency, String patchedModule) {
+		this.patchedDependencies.put(patchingDependency, patchedModule);
 	}
 
 	public List<OpenItem> getCustomOpenItems() {
