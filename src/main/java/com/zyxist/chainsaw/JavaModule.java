@@ -26,6 +26,7 @@ public class JavaModule {
 	private String moduleName;
 	private boolean allowModuleNamingViolations = false;
 	private List<String> addTestModules = new ArrayList<>();
+	private List<String> exportTestPackages = new ArrayList<>();
 	private JavaModuleHacks hacks = new JavaModuleHacks();
 
 	public String getName() {
@@ -50,6 +51,14 @@ public class JavaModule {
 
 	public void setExtraTestModules(List<String> testModules) {
 		this.addTestModules = testModules;
+	}
+
+	public List<String> getExportedTestPackages() {
+		return exportTestPackages;
+	}
+
+	public void setExportedTestPackages(List<String> testPackages) {
+		this.exportTestPackages = testPackages;
 	}
 
 	public void hacks(Action<? super JavaModuleHacks> action) {

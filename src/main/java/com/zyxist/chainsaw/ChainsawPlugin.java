@@ -50,6 +50,7 @@ public class ChainsawPlugin implements Plugin<Project> {
 	private static final TestEngine[] TEST_ENGINES = {
 		new JUnit4(),
 		new JUnit5(),
+		new TestNG(),
 		new NoTestEngine()
 	};
 
