@@ -24,6 +24,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.zyxist.chainsaw.builder.factory.TestNGSampleTestFactory.testngTestWithMocks
+import static com.zyxist.chainsaw.builder.factory.TestNGExportedTestPackageTestFactory.exportedTestPackageTestWithMocks
 import static com.zyxist.chainsaw.builder.factory.RegularJavaClassFactory.regularJavaClass
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
@@ -71,6 +72,28 @@ class TestNGTestSpec extends Specification {
 		given:
 		project
 			.gradleJavaPlugin("application")
+			.createGradleBuild()
+			.createModuleDescriptor()
+
+		when:
+		def result = GradleRunner.create()
+			.withProjectDir(tmpDir.root)
+			.withDebug(true)
+			.forwardOutput()
+			.withArguments("check")
+			.withPluginClasspath().build()
+
+		then:
+		result.task(":test").outcome == SUCCESS
+	}
+
+	@IgnoreIf({NOT_JAVA_9})
+	def "run TestNG with explicitly exported test packages"() {
+		given:
+		project
+			.gradleJavaPlugin("application")
+			.createJavaTestFile(exportedTestPackageTestWithMocks())
+			.exportedTestPackage("com.example.test")
 			.createGradleBuild()
 			.createModuleDescriptor()
 

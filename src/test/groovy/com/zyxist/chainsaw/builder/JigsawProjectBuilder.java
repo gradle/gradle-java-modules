@@ -49,6 +49,7 @@ public class JigsawProjectBuilder {
 	private final List<String> exportedPackages = new ArrayList<>();
 
 	private final List<String> extraTestModules = new ArrayList<>();
+	private final List<String> exportedTestPackages = new ArrayList<>();
 	private final List<String> openConfig = new ArrayList<>();
 	private final List<String> patchConfig = new ArrayList<>();
 
@@ -147,6 +148,11 @@ public class JigsawProjectBuilder {
 
 	public JigsawProjectBuilder extraTestModule(String moduleName) {
 		this.extraTestModules.add(moduleName);
+		return this;
+	}
+
+	public JigsawProjectBuilder exportedTestPackage(String pkg) {
+		this.exportedTestPackages.add(pkg);
 		return this;
 	}
 
@@ -314,8 +320,11 @@ public class JigsawProjectBuilder {
 	}
 
 	private void generateTestConfig(StringBuilder build) {
-		if (!testJvmArgs.isEmpty()) {
+		if (!testJvmArgs.isEmpty() || !testCompileDependencies.isEmpty()) {
 			build.append("test {\n");
+			if (testCompileDependencies.contains(Dependencies.TESTNG_DEPENDENCY)) {
+				build.append("  useTestNG()");
+			}
 			for (String arg: testJvmArgs) {
 				build.append("    jvmArgs '" + arg + "'\n");
 			}
@@ -332,6 +341,9 @@ public class JigsawProjectBuilder {
 		}
 		if (!extraTestModules.isEmpty()) {
 			build.append("javaModule.extraTestModules = ['" + String.join("', '", extraTestModules) + "']\n");
+		}
+		if (!exportedTestPackages.isEmpty()) {
+			build.append("javaModule.exportedTestPackages = ['" + String.join("', '", exportedTestPackages) + "']\n");
 		}
 		if (!patchConfig.isEmpty() || ! openConfig.isEmpty()) {
 			build.append("javaModule.hacks {\n");
