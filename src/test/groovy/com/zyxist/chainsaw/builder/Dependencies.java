@@ -20,6 +20,7 @@ public class Dependencies {
 	public static final String JUNIT5_PLUGIN_DEPENDENCY = "org.junit.platform:junit-platform-gradle-plugin:1.0.0";
 	public static final String JUNIT5_API_DEPENDENCY = "org.junit.jupiter:junit-jupiter-api:5.0.0";
 	public static final String JUNIT5_ENGINE_DEPENDENCY = "org.junit.jupiter:junit-jupiter-engine:5.0.0";
+	public static final String TESTNG_DEPENDENCY = "org.testng:testng:6.14.2";
 	public static final String MOCKITO_DEPENDENCY = "org.mockito:mockito-core:2.11.0";
 	public static final String GUAVA_DEPENDENCY = "com.google.guava:guava:23.2-jre";
 	public static final String GUICE_DEPENDENCY = "com.google.inject:guice:4.2.0";

@@ -19,6 +19,7 @@ import com.zyxist.chainsaw.JavaModule;
 import com.zyxist.chainsaw.TaskConfigurator;
 import com.zyxist.chainsaw.algorithms.ModulePatcher;
 import com.zyxist.chainsaw.jigsaw.JigsawCLI;
+import com.zyxist.chainsaw.jigsaw.cli.ExportItem;
 import com.zyxist.chainsaw.jigsaw.cli.PatchItem;
 import com.zyxist.chainsaw.jigsaw.cli.ReadItem;
 import org.gradle.api.Action;
@@ -62,6 +63,10 @@ public class TestTaskConfigurator implements TaskConfigurator<Test> {
 				.read(new ReadItem(moduleConfig.getName())
 					.toAll(testEngine.getTestEngineModules())
 					.toAll(moduleConfig.getExtraTestModules()));
+			moduleConfig.getExportedTestPackages().forEach(exportTestPackage -> cli.exportList()
+				.export(new ExportItem(moduleConfig.getName(), exportTestPackage)
+					.toAll(testEngine.getTestEngineModules())));
+
 			moduleConfig.getHacks().applyHacks(cli);
 			patcher
 				.patchFrom(project, PATCH_CONFIGURATION_NAME)
