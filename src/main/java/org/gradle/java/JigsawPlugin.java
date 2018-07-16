@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import static org.gradle.api.logging.Logging.getLogger;
 
@@ -188,8 +189,8 @@ public class JigsawPlugin implements Plugin<Project> {
     private void replaceLibsPlaceHolder(final Path path, final String newText) {
         try {
             final List<String> bashContent = Files.readAllLines(path, UTF_8);
-            for (int i=0; i < bashContent.size(); i++) {
-                bashContent.set(i, bashContent.get(i).replaceFirst(LIBS_PLACEHOLDER, newText));
+            for (final ListIterator<String> bashContentLitr = bashContent.listIterator(); bashContentLitr.hasNext();) {
+                bashContentLitr.set(bashContentLitr.next().replaceFirst(LIBS_PLACEHOLDER, newText));
             }
             Files.write(path, bashContent, UTF_8);
         } catch (final IOException e) {
