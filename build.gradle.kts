@@ -4,7 +4,7 @@ plugins {
     groovy
     idea
     `java-gradle-plugin`
-    id("com.gradle.plugin-publish") version "0.9.7"
+    id("com.gradle.plugin-publish") version "0.9.10"
 }
 
 group = "org.gradle.java"
