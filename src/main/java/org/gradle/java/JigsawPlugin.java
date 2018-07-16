@@ -50,7 +50,7 @@ public class JigsawPlugin implements Plugin<Project> {
     private static final String LIBS_PLACEHOLDER = "APP_HOME_LIBS_PLACEHOLDER";
 
     @Override
-    public void apply(Project project) {
+    public void apply(final Project project) {
         LOGGER.debug("Applying JigsawPlugin to " + project.getName());
         project.getPlugins().apply(JavaPlugin.class);
         project.getExtensions().create(EXTENSION_NAME, JavaModule.class);
@@ -67,7 +67,7 @@ public class JigsawPlugin implements Plugin<Project> {
                 configureTestTask(project);
                 project.getPluginManager().withPlugin(APPLICATION_PLUGIN, new Action<AppliedPlugin>() {
                     @Override
-                    public void execute(AppliedPlugin appliedPlugin) {
+                    public void execute(final AppliedPlugin appliedPlugin) {
                         configureRunTask(project);
                         configureStartScriptsTask(project);
                     }
@@ -80,8 +80,8 @@ public class JigsawPlugin implements Plugin<Project> {
         final JavaCompile compileJava = (JavaCompile) project.getTasks().findByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
         compileJava.doFirst(new Action<Task>() {
             @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
+            public void execute(final Task task) {
+                final List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(compileJava.getClasspath().getAsPath());
                 compileJava.getOptions().setCompilerArgs(args);
@@ -98,8 +98,8 @@ public class JigsawPlugin implements Plugin<Project> {
         compileTestJava.getInputs().property("moduleName", module.getName());
         compileTestJava.doFirst(new Action<Task>() {
             @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
+            public void execute(final Task task) {
+                final List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(compileTestJava.getClasspath().getAsPath());
                 args.add("--add-modules");
@@ -121,8 +121,8 @@ public class JigsawPlugin implements Plugin<Project> {
         testTask.getInputs().property("moduleName", module.getName());
         testTask.doFirst(new Action<Task>() {
             @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
+            public void execute(final Task task) {
+                final List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(testTask.getClasspath().getAsPath());
                 args.add("--add-modules");
@@ -143,8 +143,8 @@ public class JigsawPlugin implements Plugin<Project> {
         run.getInputs().property("moduleName", module.getName());
         run.doFirst(new Action<Task>() {
             @Override
-            public void execute(Task task) {
-                List<String> args = new ArrayList<>();
+            public void execute(final Task task) {
+                final List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(run.getClasspath().getAsPath());
                 args.add("--module");
@@ -162,9 +162,9 @@ public class JigsawPlugin implements Plugin<Project> {
         startScripts.getInputs().property("moduleName", module.getName());
         startScripts.doFirst(new Action<Task>() {
             @Override
-            public void execute(Task task) {
+            public void execute(final Task task) {
                 startScripts.setClasspath(project.files());
-                List<String> args = new ArrayList<>();
+                final List<String> args = new ArrayList<>();
                 args.add("--module-path");
                 args.add(LIBS_PLACEHOLDER);
                 args.add("--module");
@@ -174,23 +174,23 @@ public class JigsawPlugin implements Plugin<Project> {
         });
         startScripts.doLast(new Action<Task>() {
             @Override
-            public void execute(Task task) {
-                File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
+            public void execute(final Task task) {
+                final File bashScript = new File(startScripts.getOutputDir(), startScripts.getApplicationName());
                 replaceLibsPlaceHolder(bashScript.toPath(), "\\$APP_HOME/lib");
-                File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
+                final File batFile = new File(startScripts.getOutputDir(), startScripts.getApplicationName() + ".bat");
                 replaceLibsPlaceHolder(batFile.toPath(), "%APP_HOME%\\lib");
             }
         });
     }
 
-    private void replaceLibsPlaceHolder(Path path, String newText) {
+    private void replaceLibsPlaceHolder(final Path path, final String newText) {
         try {
-            List<String> bashContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
+            final List<String> bashContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
             for (int i=0; i < bashContent.size(); i++) {
                 bashContent.set(i, bashContent.get(i).replaceFirst(LIBS_PLACEHOLDER, newText));
             }
             Files.write(path, bashContent, StandardCharsets.UTF_8);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new GradleException("Couldn't replace placeholder in " + path);
         }
     }
