@@ -94,7 +94,7 @@ public class JigsawPlugin implements Plugin<Project> {
         final JavaCompile compileTestJava = (JavaCompile) project.getTasks()
                 .findByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME);
         final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+        final JavaModule module = getJavaModule(project);
         compileTestJava.getInputs().property("moduleName", module.getName());
         compileTestJava.doFirst(new Action<Task>() {
             @Override
@@ -117,7 +117,7 @@ public class JigsawPlugin implements Plugin<Project> {
     private void configureTestTask(final Project project) {
         final Test testTask = (Test) project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
         final SourceSet test = ((SourceSetContainer) project.getProperties().get("sourceSets")).getByName("test");
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+        final JavaModule module = getJavaModule(project);
         testTask.getInputs().property("moduleName", module.getName());
         testTask.doFirst(new Action<Task>() {
             @Override
@@ -139,7 +139,7 @@ public class JigsawPlugin implements Plugin<Project> {
 
     private void configureRunTask(final Project project) {
         final JavaExec run = (JavaExec) project.getTasks().findByName(ApplicationPlugin.TASK_RUN_NAME);
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+        final JavaModule module = getJavaModule(project);
         run.getInputs().property("moduleName", module.getName());
         run.doFirst(new Action<Task>() {
             @Override
@@ -158,7 +158,7 @@ public class JigsawPlugin implements Plugin<Project> {
     private void configureStartScriptsTask(final Project project) {
         final CreateStartScripts startScripts = (CreateStartScripts) project.getTasks()
                 .findByName(ApplicationPlugin.TASK_START_SCRIPTS_NAME);
-        final JavaModule module = (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
+        final JavaModule module = getJavaModule(project);
         startScripts.getInputs().property("moduleName", module.getName());
         startScripts.doFirst(new Action<Task>() {
             @Override
@@ -193,5 +193,9 @@ public class JigsawPlugin implements Plugin<Project> {
         } catch (IOException e) {
             throw new GradleException("Couldn't replace placeholder in " + path);
         }
+    }
+
+    private JavaModule getJavaModule(final Project project) {
+        return (JavaModule) project.getExtensions().getByName(EXTENSION_NAME);
     }
 }
