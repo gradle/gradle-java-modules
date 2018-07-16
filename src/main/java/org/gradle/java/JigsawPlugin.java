@@ -170,13 +170,16 @@ public class JigsawPlugin implements Plugin<Project> {
         startScripts.doFirst(new Action<Task>() {
             @Override
             public void execute(final Task task) {
-                startScripts.setClasspath(project.files());
                 final List<String> args = new ArrayList<>();
+
                 args.add("--module-path");
                 args.add(LIBS_PLACEHOLDER);
                 args.add("--module");
                 args.add(module.getName() + '/' + startScripts.getMainClassName());
+
                 startScripts.setDefaultJvmOpts(args);
+
+                startScripts.setClasspath(project.files());
             }
         });
         startScripts.doLast(new Action<Task>() {
