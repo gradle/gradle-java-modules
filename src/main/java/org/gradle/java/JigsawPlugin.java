@@ -84,10 +84,11 @@ public class JigsawPlugin implements Plugin<Project> {
         compileJava.doFirst(new Action<Task>() {
             @Override
             public void execute(final Task task) {
-                final List<String> args = new ArrayList<>();
+                final List<String> args = compileJava.getOptions().getCompilerArgs();
+
                 args.add("--module-path");
                 args.add(compileJava.getClasspath().getAsPath());
-                compileJava.getOptions().setCompilerArgs(args);
+
                 compileJava.setClasspath(project.files());
             }
         });
@@ -102,7 +103,8 @@ public class JigsawPlugin implements Plugin<Project> {
         compileTestJava.doFirst(new Action<Task>() {
             @Override
             public void execute(final Task task) {
-                final List<String> args = new ArrayList<>();
+                final List<String> args = compileTestJava.getOptions().getCompilerArgs();
+
                 args.add("--module-path");
                 args.add(compileTestJava.getClasspath().getAsPath());
                 args.add("--add-modules");
@@ -111,7 +113,7 @@ public class JigsawPlugin implements Plugin<Project> {
                 args.add(module.getName() + "=junit");
                 args.add("--patch-module");
                 args.add(module.getName() + '=' + test.getJava().getSourceDirectories().getAsPath());
-                compileTestJava.getOptions().setCompilerArgs(args);
+
                 compileTestJava.setClasspath(project.files());
             }
         });
@@ -125,7 +127,8 @@ public class JigsawPlugin implements Plugin<Project> {
         testTask.doFirst(new Action<Task>() {
             @Override
             public void execute(final Task task) {
-                final List<String> args = new ArrayList<>();
+                final List<String> args = testTask.getJvmArgs();
+
                 args.add("--module-path");
                 args.add(testTask.getClasspath().getAsPath());
                 args.add("--add-modules");
@@ -134,7 +137,7 @@ public class JigsawPlugin implements Plugin<Project> {
                 args.add(module.getName() + "=junit");
                 args.add("--patch-module");
                 args.add(module.getName() + '=' + test.getJava().getOutputDir());
-                testTask.setJvmArgs(args);
+
                 testTask.setClasspath(project.files());
             }
         });
@@ -147,12 +150,13 @@ public class JigsawPlugin implements Plugin<Project> {
         run.doFirst(new Action<Task>() {
             @Override
             public void execute(final Task task) {
-                final List<String> args = new ArrayList<>();
+                final List<String> args = run.getJvmArgs();
+
                 args.add("--module-path");
                 args.add(run.getClasspath().getAsPath());
                 args.add("--module");
                 args.add(module.getName() + '/' + run.getMain());
-                run.setJvmArgs(args);
+
                 run.setClasspath(project.files());
             }
         });
