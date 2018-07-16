@@ -21,7 +21,7 @@ package org.gradle.java;
 public class JavaModule {
     private String moduleName;
 
-    public String geName() {
+    public String getName() {
         return moduleName;
     }
 
