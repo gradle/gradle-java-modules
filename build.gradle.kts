@@ -1,4 +1,4 @@
-import org.gradle.api.JavaVersion.VERSION_1_7
+import org.gradle.api.JavaVersion.VERSION_1_9
 
 plugins {
     groovy
@@ -12,8 +12,8 @@ group = "org.gradle.java"
 version = "0.1.1"
 
 java {
-    targetCompatibility = VERSION_1_7
-    sourceCompatibility = VERSION_1_7
+    targetCompatibility = VERSION_1_9
+    sourceCompatibility = VERSION_1_9
 }
 
 // Fix a bad interaction with IntelliJ and Gradle > 4.0
