@@ -21,7 +21,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.ApplicationPlugin;
 import org.gradle.api.plugins.AppliedPlugin;
 import org.gradle.api.plugins.JavaPlugin;
@@ -34,14 +33,17 @@ import org.gradle.jvm.application.tasks.CreateStartScripts;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.gradle.api.logging.Logging.getLogger;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class JigsawPlugin implements Plugin<Project> {
-    private static final Logger LOGGER = Logging.getLogger(JigsawPlugin.class);
+    private static final Logger LOGGER = getLogger(JigsawPlugin.class);
 
     private static final String APPLICATION_PLUGIN = "application";
 
@@ -185,11 +187,11 @@ public class JigsawPlugin implements Plugin<Project> {
 
     private void replaceLibsPlaceHolder(final Path path, final String newText) {
         try {
-            final List<String> bashContent = new ArrayList<>(Files.readAllLines(path, StandardCharsets.UTF_8));
+            final List<String> bashContent = Files.readAllLines(path, UTF_8);
             for (int i=0; i < bashContent.size(); i++) {
                 bashContent.set(i, bashContent.get(i).replaceFirst(LIBS_PLACEHOLDER, newText));
             }
-            Files.write(path, bashContent, StandardCharsets.UTF_8);
+            Files.write(path, bashContent, UTF_8);
         } catch (final IOException e) {
             throw new GradleException("Couldn't replace placeholder in " + path);
         }
